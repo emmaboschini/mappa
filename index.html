@@ -287,8 +287,8 @@
         svg.attr("width", width).attr("height", height);
 
         const projection = d3.geoMercator()
-            .center([12, 43]) // Centered more on Italy/Mediterranean core
-            .scale(width * 1.8) 
+            .center([12, 43]) 
+            .scale(width * 1.5) 
             .translate([width / 2, height / 2]);
 
         const path = d3.geoPath().projection(projection);
