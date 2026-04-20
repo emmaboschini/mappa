@@ -28,7 +28,9 @@
             height: 100vh;
             width: 100%;
             z-index: 1;
+            background-color: var(--med-blue);
         }
+
         /* Filter Control Styling */
         .filter-container {
             position: absolute;
@@ -177,14 +179,29 @@
 
 <script>
     // Initialize the map
-    const map = L.map('map').setView([41.9028, 12.4964], 6); // Centered on Italy
+    const map = L.map('map', {
+        center: [41.9028, 12.4964],
+        zoom: 6,
+        minZoom: 2,
+        maxBounds: [[-90, -180], [90, 180]]
+    });
 
-    // Add Tile Layer (CartoDB Positron No Labels for a clean map)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributori &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 20
-    }).addTo(map);
+    // Load World GeoJSON for a professional minimalist look
+    fetch('https://raw.githubusercontent.com/datasets/geo-boundaries-world-110m/master/countries.geojson')
+        .then(response => response.json())
+        .then(data => {
+            L.geoJSON(data, {
+                style: function(feature) {
+                    return {
+                        fillColor: '#ffffff', // Land color
+                        fillOpacity: 1,
+                        color: 'var(--med-light-blue)', // Border color
+                        weight: 0.8,
+                        opacity: 1
+                    };
+                }
+            }).addTo(map);
+        });
 
     // Data from CSV geocoded with Country and Region
     const equipaggi = [
