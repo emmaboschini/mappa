@@ -117,7 +117,7 @@
         }
 
         .country-path:hover {
-            fill: #001a44;
+            fill: #1c5ba5;
         }
 
         .marker-group {
@@ -285,10 +285,10 @@
         const config = {
             colors: {
                 orange: '#FF5B00',
-                blue: '#00235D',
-                lightBlue: '#009EE0',
+                blue: '#003380',
+                lightBlue: '#00AEEF',
                 white: '#FFFFFF',
-                dark: '#001a44'
+                dark: '#1a4a8d'
             }
         };
 
@@ -302,7 +302,7 @@
         svg.attr("width", width).attr("height", height);
 
         const projection = d3.geoMercator()
-            .center([15, 48]) // Slightly higher center to match the framing
+            .center([15, 48]) 
             .scale(width * 2.2) 
             .translate([width / 2, height / 2]);
 
@@ -312,19 +312,17 @@
             .scaleExtent([0.5, 40])
             .on("zoom", (event) => {
                 g.attr("transform", event.transform);
-                // Maintain marker size
                 g.selectAll(".marker")
                     .attr("r", 5 / event.transform.k)
                     .attr("stroke-width", 1.5 / event.transform.k);
                 g.selectAll(".marker-pulse")
-                    .attr("stroke-width", 0); // No stroke on pulse
+                    .attr("stroke-width", 0); 
                 g.selectAll(".country-path")
                     .attr("stroke-width", 0.6 / event.transform.k);
             });
 
         svg.call(zoom);
 
-        // Zoom button logic
         d3.select("#zoom-in").on("click", () => {
             svg.transition().duration(300).call(zoom.scaleBy, 1.5);
         });
@@ -333,12 +331,10 @@
             svg.transition().duration(300).call(zoom.scaleBy, 0.6);
         });
 
-        // Load Data
         Promise.all([
             d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json")
         ]).then(([world]) => {
             
-            // Map ISO IDs to Italian names to match our locations data
             const isoToName = {
                 "380": "Italia",
                 "724": "Spagna",
@@ -348,51 +344,6 @@
                 "756": "Svizzera"
             };
 
-            // Zoom to country helper
-            function focusOnCountry(geoFeature) {
-                let [[x0, y0], [x1, y1]] = path.bounds(geoFeature);
-                
-                // Special case for Netherlands (ID 528) - focused on mainland
-                if (geoFeature.id === "528" || geoFeature.id === 528) {
-                    const [[nx0, ny0], [nx1, ny1]] = path.bounds({
-                        type: "Feature",
-                        geometry: {
-                            type: "Polygon",
-                            coordinates: [[[3.2, 50.7], [7.3, 50.7], [7.3, 53.6], [3.2, 53.6], [3.2, 50.7]]]
-                        }
-                    });
-                    [x0, y0, x1, y1] = [nx0, ny0, nx1, ny1];
-                }
-
-                // Special case for Spain (ID 724) to focus on mainland/Balearics
-                if (geoFeature.id === "724" || geoFeature.id === 724) {
-                    const [[nx0, ny0], [nx1, ny1]] = path.bounds({
-                        type: "Feature",
-                        geometry: {
-                            type: "Polygon",
-                            coordinates: [[[-9.5, 35.8], [4.5, 35.8], [4.5, 43.8], [-9.5, 43.8], [-9.5, 35.8]]]
-                        }
-                    });
-                    [x0, y0, x1, y1] = [nx0, ny0, nx1, ny1];
-                }
-
-                const dx = x1 - x0;
-                const dy = y1 - y0;
-                const x = (x0 + x1) / 2;
-                const y = (y0 + y1) / 2;
-                
-                // Set a reasonable max zoom for all
-                let maxZoom = 8; 
-
-                const scale = Math.min(maxZoom, 0.7 / Math.max(dx / width, dy / height));
-                const translate = [width / 2 - scale * x, height / 2 - scale * y];
-
-                svg.transition()
-                    .duration(1000)
-                    .call(zoom.transform, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale));
-            }
-
-            
             const locations = [
   {
     "name": "Alcamo",
@@ -934,17 +885,35 @@
     "region": "Veneto"
   }
 ];
-            
-            // Draw World
+
+            function focusOnCountry(countryName) {
+                const countryLocs = locations.filter(loc => loc.country === countryName);
+                if (countryLocs.length === 0) return;
+
+                const lats = countryLocs.map(d => d.lat);
+                const lons = countryLocs.map(d => d.lon);
+                const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+                const minLon = Math.min(...lons), maxLon = Math.max(...lons);
+
+                const p0 = projection([minLon, minLat]), p1 = projection([maxLon, maxLat]);
+                const x0 = Math.min(p0[0], p1[0]), y0 = Math.min(p0[1], p1[1]);
+                const x1 = Math.max(p0[0], p1[0]), y1 = Math.max(p0[1], p1[1]);
+                
+                const dx = x1 - x0 || 40, dy = y1 - y0 || 40;
+                const x = (x0 + x1) / 2, y = (y0 + y1) / 2;
+                
+                const scale = Math.min(8, 0.6 / Math.max(dx / width, dy / height));
+                const translate = [width / 2 - scale * x, height / 2 - scale * y];
+
+                svg.transition().duration(1000)
+                    .call(zoom.transform, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale));
+            }
+
             const countries = topojson.feature(world, world.objects.countries);
-            
-            // Morocco (504) and Western Sahara (732) often need to be unified
-            // We filter them out of the main set and draw them as a single merged feature
             const moroccoIds = [504, 732];
             const otherCountries = countries.features.filter(d => !moroccoIds.includes(+d.id));
             const moroccoFeatures = countries.features.filter(d => moroccoIds.includes(+d.id));
             
-            // Draw all other countries
             g.selectAll(".country-path")
                 .data(otherCountries)
                 .enter().append("path")
@@ -952,12 +921,9 @@
                 .attr("d", path)
                 .on("click", (event, d) => {
                     const countryName = isoToName[String(+d.id)];
-                    if (countryName && locations.some(loc => loc.country === countryName)) {
-                        focusOnCountry(d);
-                    }
+                    if (countryName) focusOnCountry(countryName);
                 });
 
-            // Draw Unified Morocco
             if (moroccoFeatures.length > 0) {
                 const unifiedMorocco = topojson.merge(world, world.objects.countries.geometries.filter(d => moroccoIds.includes(+d.id)));
                 g.append("path")
@@ -965,14 +931,10 @@
                     .attr("class", "country-path")
                     .attr("d", path)
                     .on("click", (event, d) => {
-                        const countryName = "Marocco"; 
-                        if (locations.some(loc => loc.country === countryName)) {
-                            focusOnCountry(d);
-                        }
+                        focusOnCountry("Marocco");
                     });
             }
 
-            // Markers
             const markerGroups = g.selectAll(".marker-group")
                 .data(locations)
                 .enter().append("g")
@@ -1006,7 +968,6 @@
                     .on("end", function() { pulse(d3.select(this)); });
             }
 
-            // Tooltip Logic
             const tooltip = d3.select("#tooltip");
 
             function showTooltip(event, d) {
@@ -1015,151 +976,74 @@
                 if (d.fb) icons += '<i class="fa-brands fa-facebook"></i>';
                 if (d.ig) icons += '<i class="fa-brands fa-instagram"></i>';
                 if (d.x) icons += '<i class="fa-brands fa-x-twitter"></i>';
-                
-                tooltip.style("display", "block")
-                    .html(`<span>${d.name}</span> ${icons}`);
-                
+                tooltip.style("display", "block").html(`<span>${d.name}</span> ${icons}`);
                 event.stopPropagation();
             }
 
             function moveTooltip(event) {
                 const [x, y] = d3.pointer(event, container);
-                tooltip.style("left", (x + 15) + "px")
-                    .style("top", (y - 15) + "px");
+                tooltip.style("left", (x + 15) + "px").style("top", (y - 15) + "px");
             }
 
-            function hideTooltip() {
+            function hideTooltip(event) {
                 tooltip.style("display", "none");
             }
 
-            // Populate Filters
             const countriesList = [...new Set(locations.map(d => d.country))].sort();
             const regionsList = [...new Set(locations.filter(d => d.region).map(d => d.region))].sort();
-
             const countrySelect = d3.select("#country-filter");
             countriesList.forEach(c => countrySelect.append("option").text(c).attr("value", c));
-
             const regionSelect = d3.select("#region-filter");
             regionsList.forEach(r => regionSelect.append("option").text(r).attr("value", r));
 
-            // Filter Logic
             function updateFilters() {
                 const selectedCountry = countrySelect.property("value");
                 const selectedRegion = regionSelect.property("value");
-
                 markerGroups.style("display", d => {
                     const countryMatch = selectedCountry === "all" || d.country === selectedCountry;
                     const regionMatch = selectedRegion === "all" || d.region === selectedRegion;
                     return (countryMatch && regionMatch) ? "block" : "none";
                 });
-
-                if (selectedCountry !== "all") {
-                    const geoFeature = countries.features.find(f => isoToName[String(+f.id)] === selectedCountry);
-                    if (geoFeature) focusOnCountry(geoFeature);
-                }
-
+                if (selectedCountry !== "all") focusOnCountry(selectedCountry);
                 hidePopup();
             }
 
             countrySelect.on("change", updateFilters);
             regionSelect.on("change", updateFilters);
 
-            // Popup Logic
             function showPopup(event, d) {
                 const popup = d3.select("#popup");
                 const title = d3.select("#popup-title");
                 const socials = d3.select("#popup-socials");
-
                 title.text(d.name);
                 socials.html("");
-
-                if (d.mail) {
-                    socials.append("a")
-                        .attr("href", `mailto:${d.mail}`)
-                        .attr("class", "social-btn")
-                        .attr("title", "Email")
-                        .html('<i class="fa-solid fa-envelope"></i> Email');
-                }
-                if (d.fb) {
-                    socials.append("a")
-                        .attr("href", d.fb)
-                        .attr("target", "_blank")
-                        .attr("class", "social-btn")
-                        .attr("title", "Facebook")
-                        .html('<i class="fa-brands fa-facebook"></i> Facebook');
-                }
-                if (d.ig) {
-                    socials.append("a")
-                        .attr("href", d.ig)
-                        .attr("target", "_blank")
-                        .attr("class", "social-btn")
-                        .attr("title", "Instagram")
-                        .html('<i class="fa-brands fa-instagram"></i> Instagram');
-                }
-                if (d.x) {
-                    socials.append("a")
-                        .attr("href", d.x)
-                        .attr("target", "_blank")
-                        .attr("class", "social-btn")
-                        .attr("title", "X")
-                        .html('<i class="fa-brands fa-x-twitter"></i> X');
-                }
-
-                // Position popup
+                if (d.mail) socials.append("a").attr("href", `mailto:${d.mail}`).attr("class", "social-btn").html('<i class="fa-solid fa-envelope"></i> Email');
+                if (d.fb) socials.append("a").attr("href", d.fb).attr("target", "_blank").attr("class", "social-btn").html('<i class="fa-brands fa-facebook"></i> Facebook');
+                if (d.ig) socials.append("a").attr("href", d.ig).attr("target", "_blank").attr("class", "social-btn").html('<i class="fa-brands fa-instagram"></i> Instagram');
+                if (d.x) socials.append("a").attr("href", d.x).attr("target", "_blank").attr("class", "social-btn").html('<i class="fa-brands fa-x-twitter"></i> X');
+                
                 const [x, y] = d3.pointer(event, container);
-
-                // Show temporarily to get dimensions
-                popup.style("display", "block")
-                    .style("visibility", "hidden");
-
-                const popupNode = popup.node();
-                const popupWidth = popupNode.offsetWidth;
-                const popupHeight = popupNode.offsetHeight;
-                const containerWidth = container.clientWidth;
-                const containerHeight = container.clientHeight;
-
-                let left = x + 15;
-                let top = y - popupHeight / 2; // Center vertically by default
-
-                // Prevent overflow right
-                if (left + popupWidth > containerWidth) {
-                    left = x - popupWidth - 15;
-                }
-
-                // Prevent overflow bottom (Sicily issue)
-                if (top + popupHeight > containerHeight) {
-                    top = containerHeight - popupHeight - 15;
-                }
-
-                // Prevent overflow top
-                if (top < 15) {
-                    top = 15;
-                }
-
-                popup.style("visibility", "visible")
-                    .style("left", left + "px")
-                    .style("top", top + "px");
-
+                popup.style("display", "block").style("visibility", "hidden");
+                const node = popup.node();
+                const pw = node.offsetWidth, ph = node.offsetHeight;
+                let l = x + 15, t = y - ph / 2;
+                if (l + pw > container.clientWidth) l = x - pw - 15;
+                if (t + ph > container.clientHeight) t = container.clientHeight - ph - 15;
+                if (t < 15) t = 15;
+                popup.style("visibility", "visible").style("left", l + "px").style("top", t + "px");
                 event.stopPropagation();
-                }
-            function hidePopup() {
-                d3.select("#popup").style("display", "none");
             }
 
+            function hidePopup() { d3.select("#popup").style("display", "none"); }
             d3.select(".close-popup").on("click", hidePopup);
             svg.on("click", hidePopup);
 
-            // Responsive
             window.addEventListener("resize", () => {
-                width = container.clientWidth;
-                height = container.clientHeight;
+                width = container.clientWidth; height = container.clientHeight;
                 svg.attr("width", width).attr("height", height);
                 projection.translate([width / 2, height / 2]);
                 g.selectAll(".country-path").attr("d", path);
-                g.selectAll(".region-path").attr("d", path);
-                g.selectAll(".marker")
-                    .attr("cx", d => projection([d.lon, d.lat])[0])
-                    .attr("cy", d => projection([d.lon, d.lat])[1]);
+                markerGroups.attr("transform", d => `translate(${projection([d.lon, d.lat])})`);
             });
         });
     </script>
