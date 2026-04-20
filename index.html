@@ -205,8 +205,8 @@
         svg.attr("width", width).attr("height", height);
 
         const projection = d3.geoMercator()
-            .center([15, 45]) // Adjusted center to see more of Europe/Mediterranean
-            .scale(width * 1.5) 
+            .center([15, 48]) // Slightly higher center to match the framing
+            .scale(width * 2.2) 
             .translate([width / 2, height / 2]);
 
         const path = d3.geoPath().projection(projection);
