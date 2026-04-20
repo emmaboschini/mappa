@@ -931,8 +931,8 @@
 
             function showTooltip(event, d) {
                 let icons = "";
-                if (d.mail) icons += '<i class="fas fa-envelope"></i>';
-                if (d.fb) icons += '<i class="fa-brands fa-facebook-f"></i>';
+                if (d.mail) icons += '<i class="fa-solid fa-envelope"></i>';
+                if (d.fb) icons += '<i class="fa-brands fa-facebook"></i>';
                 if (d.ig) icons += '<i class="fa-brands fa-instagram"></i>';
                 if (d.x) icons += '<i class="fa-brands fa-x-twitter"></i>';
                 
@@ -993,7 +993,7 @@
                         .attr("href", `mailto:${d.mail}`)
                         .attr("class", "social-btn")
                         .attr("title", "Email")
-                        .html('<i class="fas fa-envelope"></i> Email');
+                        .html('<i class="fa-solid fa-envelope"></i> Email');
                 }
                 if (d.fb) {
                     socials.append("a")
@@ -1001,7 +1001,7 @@
                         .attr("target", "_blank")
                         .attr("class", "social-btn")
                         .attr("title", "Facebook")
-                        .html('<i class="fab fa-facebook-f"></i> Facebook');
+                        .html('<i class="fa-brands fa-facebook"></i> Facebook');
                 }
                 if (d.ig) {
                     socials.append("a")
@@ -1009,7 +1009,7 @@
                         .attr("target", "_blank")
                         .attr("class", "social-btn")
                         .attr("title", "Instagram")
-                        .html('<i class="fab fa-instagram"></i> Instagram');
+                        .html('<i class="fa-brands fa-instagram"></i> Instagram');
                 }
                 if (d.x) {
                     socials.append("a")
