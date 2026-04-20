@@ -350,12 +350,31 @@
 
             // Zoom to country helper
             function focusOnCountry(geoFeature) {
-                const [[x0, y0], [x1, y1]] = path.bounds(geoFeature);
+                let [[x0, y0], [x1, y1]] = path.bounds(geoFeature);
+                
+                // Special case for Netherlands (ID 528) to avoid distant islands
+                if (geoFeature.id === "528" || geoFeature.id === 528) {
+                    // Force a bounding box that only covers European Netherlands
+                    const [[nx0, ny0], [nx1, ny1]] = path.bounds({
+                        type: "Feature",
+                        geometry: {
+                            type: "Polygon",
+                            coordinates: [[[3, 50], [8, 50], [8, 54], [3, 54], [3, 50]]]
+                        }
+                    });
+                    [x0, y0, x1, y1] = [nx0, ny0, nx1, ny1];
+                }
+
                 const dx = x1 - x0;
                 const dy = y1 - y0;
                 const x = (x0 + x1) / 2;
                 const y = (y0 + y1) / 2;
-                const scale = Math.min(10, 0.8 / Math.max(dx / width, dy / height));
+                
+                // Allow deeper zoom for smaller countries
+                let maxZoom = 10;
+                if (geoFeature.id === "056" || geoFeature.id === "528") maxZoom = 15;
+
+                const scale = Math.min(maxZoom, 0.8 / Math.max(dx / width, dy / height));
                 const translate = [width / 2 - scale * x, height / 2 - scale * y];
 
                 svg.transition()
