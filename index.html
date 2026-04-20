@@ -6,6 +6,9 @@
     <title>Mappa Equipaggi Mediterranea</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <!-- MarkerCluster CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     <!-- Font Awesome for Social Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Google Fonts -->
@@ -30,7 +33,6 @@
             z-index: 1;
             background-color: var(--med-blue);
         }
-
         /* Filter Control Styling */
         .filter-container {
             position: absolute;
@@ -128,18 +130,24 @@
 
         /* Tooltip Styling */
         .city-tooltip {
-            background-color: rgba(255, 255, 255, 0.9);
-            border: 1px solid var(--med-blue);
-            border-radius: 4px;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
             color: var(--med-blue);
             font-weight: 700;
-            padding: 2px 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-            font-family: 'Gotham', 'Montserrat', sans-serif;
+            font-size: 0.7rem;
+            text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
+            white-space: nowrap;
         }
         .city-tooltip::before {
-            border-right-color: var(--med-blue) !important;
+            display: none !important;
         }
+
+        /* Cluster Styling */
+        .marker-cluster-small { background-color: rgba(233, 78, 27, 0.4) !important; }
+        .marker-cluster-small div { background-color: rgba(233, 78, 27, 0.8) !important; color: white !important; }
+        .marker-cluster-medium { background-color: rgba(24, 64, 126, 0.4) !important; }
+        .marker-cluster-medium div { background-color: rgba(24, 64, 126, 0.8) !important; color: white !important; }
 
         /* Responsive adjustments */
         @media (max-width: 600px) {
@@ -176,6 +184,8 @@
 
 <!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- MarkerCluster JS -->
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
 <script>
     // Initialize the map
@@ -265,7 +275,14 @@
         popupAnchor: [0, -24]
     });
 
-    const markersLayer = L.layerGroup().addTo(map);
+    const markersLayer = L.markerClusterGroup({
+        showCoverageOnHover: false,
+        spiderfyOnMaxZoom: true,
+        disableClusteringAtZoom: 8,
+        maxClusterRadius: 40
+    });
+    map.addLayer(markersLayer);
+
     const countryFilter = document.getElementById('country-filter');
     const regionFilter = document.getElementById('region-filter');
     const regionGroup = document.getElementById('region-group');
@@ -308,7 +325,7 @@
             return countryMatch && regionMatch;
         });
 
-        filtered.forEach(item => {
+        filtered.forEach((item, index) => {
             let popupContent = `
                 <div class="popup-title">${item.city}</div>
                 <div class="social-buttons">
@@ -319,21 +336,26 @@
                 </div>
             `;
 
-            L.marker([item.lat, item.lng], { icon: medIcon })
+            // Alternate label positions to reduce overlap
+            const directions = ['right', 'left', 'top', 'bottom'];
+            const dir = directions[index % 4];
+
+            const marker = L.marker([item.lat, item.lng], { icon: medIcon })
                 .bindPopup(popupContent)
                 .bindTooltip(item.city, { 
                     permanent: true, 
-                    direction: 'right',
-                    offset: [15, -15],
+                    direction: dir,
+                    offset: dir === 'right' ? [12, -12] : dir === 'left' ? [-12, -12] : dir === 'top' ? [0, -25] : [0, 5],
                     className: 'city-tooltip'
-                })
-                .addTo(markersLayer);
+                });
+            
+            markersLayer.addLayer(marker);
         });
 
         // Adjust view if filtered results exist
         if (filtered.length > 0) {
             const group = L.featureGroup(filtered.map(item => L.marker([item.lat, item.lng])));
-            map.fitBounds(group.getBounds().pad(0.1));
+            map.fitBounds(group.getBounds().pad(0.2));
         }
     }
 
