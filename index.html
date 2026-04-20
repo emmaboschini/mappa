@@ -22,47 +22,44 @@
             --med-white: #ffffff;
         }
 
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Montserrat', sans-serif; background-color: var(--med-blue); overflow: hidden; }
-        #map { height: 100vh; width: 100%; background-color: var(--med-blue); }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Montserrat', sans-serif; background-color: #18407e; overflow: hidden; }
+        #map { height: 100vh; width: 100%; background-color: #18407e; }
 
         /* Filtri */
         .filter-container {
-            position: absolute; top: 20px; right: 20px; z-index: 1000;
+            position: absolute; top: 20px; right: 20px; z-index: 2000;
             background: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3); width: 260px; border-top: 4px solid var(--med-orange);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4); width: 260px; border-top: 4px solid #e94e1b;
         }
-        .filter-title { color: var(--med-blue); font-weight: 700; margin-bottom: 15px; font-size: 1.1rem; text-transform: uppercase; }
+        .filter-title { color: #18407e; font-weight: 700; margin-bottom: 15px; font-size: 1.1rem; text-transform: uppercase; }
         .filter-group { margin-bottom: 15px; }
-        .filter-label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: var(--med-blue); opacity: 0.8; }
-        select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; font-family: inherit; font-size: 0.9rem; color: var(--med-blue); outline: none; }
+        .filter-label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: #18407e; opacity: 0.8; }
+        select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; font-family: inherit; font-size: 0.9rem; color: #18407e; outline: none; background: white; }
 
         /* Popup */
         .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; overflow: hidden; }
         .leaflet-popup-content { margin: 0 !important; width: 220px !important; }
-        .popup-header { background: var(--med-blue); color: white; padding: 15px; text-align: center; font-weight: 700; }
+        .popup-header { background: #18407e; color: white; padding: 15px; text-align: center; font-weight: 700; }
         .popup-body { padding: 15px; }
         .social-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .social-btn {
             display: flex; align-items: center; justify-content: center; padding: 10px; border-radius: 6px;
             text-decoration: none; color: white !important; font-size: 0.8rem; font-weight: 700;
-            background-color: var(--med-blue); transition: all 0.2s;
+            background-color: #18407e; transition: all 0.2s;
         }
-        .social-btn:hover { background-color: var(--med-orange); transform: translateY(-2px); }
-        .social-btn i { margin-right: 5px; }
+        .social-btn:hover { background-color: #e94e1b; transform: translateY(-2px); }
 
         /* Labels */
         .city-label {
             background: transparent !important; border: none !important; box-shadow: none !important;
-            color: var(--med-blue); font-weight: 700; font-size: 0.75rem;
+            color: #18407e; font-weight: 700; font-size: 0.8rem;
             text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
             white-space: nowrap;
         }
 
-        /* Cluster */
-        .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
-            background-color: var(--med-orange); color: white; font-weight: 700;
-        }
+        /* Cluster Personalizzati */
         .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large { background-color: rgba(233, 78, 27, 0.4); }
+        .marker-cluster div { background-color: #e94e1b; color: white; font-weight: 700; border-radius: 50%; }
 
         @media (max-width: 600px) { .filter-container { width: calc(100% - 40px); top: auto; bottom: 20px; right: 20px; } }
     </style>
@@ -93,32 +90,33 @@
         minZoom: 2
     });
 
-    // Creazione Panes per gestire la visibilità (z-index)
-    map.createPane('landPane');
-    map.getPane('landPane').style.zIndex = 200;
-    map.createPane('borderPane');
-    map.getPane('borderPane').style.zIndex = 300;
-    map.createPane('markerPane');
-    map.getPane('markerPane').style.zIndex = 600;
+    // Pane per i marker per forzarli in primo piano (z-index altissimo)
+    map.createPane('markerPaneTop');
+    map.getPane('markerPaneTop').style.zIndex = 650;
 
-    // Sfondo Terra
-    fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
+    // 1. Carica i Confini del Mondo (Terre Bianche)
+    fetch('https://raw.githubusercontent.com/datasets/geo-boundaries-world-110m/master/countries.geojson')
         .then(res => res.json())
-        .then(data => {
-            L.geoJSON(data, {
-                pane: 'landPane',
-                style: { fillColor: '#ffffff', fillOpacity: 1, color: '#388ecd', weight: 1.5, opacity: 1 }
+        .then(worldData => {
+            L.geoJSON(worldData, {
+                style: { fillColor: '#ffffff', fillOpacity: 1, color: '#388ecd', weight: 1, opacity: 1 }
             }).addTo(map);
-        });
 
-    // Confini Regioni Italiane
-    fetch('https://raw.githubusercontent.com/openpolis/geojson-italy/master/geojson/limits_IT_regions.json')
+            // 2. Carica i Confini Regionali Italiani (Sopra la terra)
+            return fetch('https://raw.githubusercontent.com/openpolis/geojson-italy/master/geojson/limits_IT_regions.json');
+        })
         .then(res => res.json())
-        .then(data => {
-            L.geoJSON(data, {
-                pane: 'borderPane',
-                style: { fillColor: 'transparent', color: '#388ecd', weight: 0.8, opacity: 0.4 }
+        .then(italyData => {
+            L.geoJSON(italyData, {
+                style: { fillColor: 'transparent', color: '#388ecd', weight: 0.5, opacity: 0.4 }
             }).addTo(map);
+
+            // 3. Carica i Marker dopo che la mappa è pronta
+            initMarkers();
+        })
+        .catch(err => {
+            console.error("Errore caricamento GeoJSON:", err);
+            initMarkers(); // Carica comunque i marker
         });
 
     const equipaggi = [
@@ -177,84 +175,74 @@
         showCoverageOnHover: false,
         spiderfyOnMaxZoom: true,
         disableClusteringAtZoom: 8,
-        maxClusterRadius: 40,
-        clusterPane: 'markerPane'
+        maxClusterRadius: 40
     });
     map.addLayer(markersCluster);
 
-    const countrySelect = document.getElementById('country-filter');
-    const regionSelect = document.getElementById('region-filter');
-    const regionGroup = document.getElementById('region-group');
+    function initMarkers() {
+        const countrySelect = document.getElementById('country-filter');
+        const regionSelect = document.getElementById('region-filter');
+        const regionGroup = document.getElementById('region-group');
 
-    // Popola Filtri
-    const countries = [...new Set(equipaggi.map(e => e.country))].sort();
-    countries.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = opt.textContent = c;
-        countrySelect.appendChild(opt);
-    });
-
-    const regions = [...new Set(equipaggi.filter(e => e.country === "Italia").map(e => e.region))].sort();
-    regions.forEach(r => {
-        const opt = document.createElement('option');
-        opt.value = opt.textContent = r;
-        regionSelect.appendChild(opt);
-    });
-
-    function updateMap() {
-        const cVal = countrySelect.value;
-        const rVal = regionSelect.value;
-        regionGroup.style.display = (cVal === "Italia") ? "block" : "none";
-        if (cVal !== "Italia") regionSelect.value = "all";
-
-        markersCluster.clearLayers();
-
-        const filtered = equipaggi.filter(e => {
-            return (cVal === "all" || e.country === cVal) && (rVal === "all" || e.region === rVal);
+        const countries = [...new Set(equipaggi.map(e => e.country))].sort();
+        countries.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = opt.textContent = c;
+            countrySelect.appendChild(opt);
         });
 
-        filtered.forEach((e, idx) => {
-            const popupHtml = `
-                <div class="popup-header">${e.city}</div>
-                <div class="popup-body">
-                    <div class="social-grid">
+        const regions = [...new Set(equipaggi.filter(e => e.country === "Italia").map(e => e.region))].sort();
+        regions.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = opt.textContent = r;
+            regionSelect.appendChild(opt);
+        });
+
+        function updateMap() {
+            const cVal = countrySelect.value;
+            const rVal = regionSelect.value;
+            regionGroup.style.display = (cVal === "Italia") ? "block" : "none";
+            if (cVal !== "Italia") regionSelect.value = "all";
+
+            markersCluster.clearLayers();
+
+            const filtered = equipaggi.filter(e => {
+                return (cVal === "all" || e.country === cVal) && (rVal === "all" || e.region === rVal);
+            });
+
+            filtered.forEach((e, idx) => {
+                const popupHtml = `
+                    <div class="popup-header">${e.city}</div>
+                    <div class="popup-body"><div class="social-grid">
                         ${e.mail ? `<a href="mailto:${e.mail}" class="social-btn"><i class="fas fa-envelope"></i>Email</a>` : ''}
                         ${e.fb ? `<a href="${e.fb}" target="_blank" class="social-btn"><i class="fab fa-facebook-f"></i>FB</a>` : ''}
                         ${e.ig ? `<a href="${e.ig}" target="_blank" class="social-btn"><i class="fab fa-instagram"></i>IG</a>` : ''}
                         ${e.x ? `<a href="${e.x}" target="_blank" class="social-btn"><i class="fab fa-x-twitter"></i>X</a>` : ''}
-                    </div>
-                </div>
-            `;
+                    </div></div>
+                `;
 
-            // Marker Circolare solido per massima visibilità
-            const marker = L.circleMarker([e.lat, e.lng], {
-                pane: 'markerPane',
-                radius: 8,
-                fillColor: "var(--med-orange)",
-                color: "#fff",
-                weight: 2,
-                fillOpacity: 1
-            }).bindPopup(popupHtml);
+                const marker = L.circleMarker([e.lat, e.lng], {
+                    radius: 9, fillColor: "#e94e1b", color: "#ffffff", weight: 3, fillOpacity: 1
+                }).bindPopup(popupHtml);
 
-            // Tooltip sfalsati
-            const dirs = ['right', 'left', 'top', 'bottom'];
-            marker.bindTooltip(e.city, {
-                permanent: true, direction: dirs[idx % 4],
-                className: 'city-label', offset: [10, -10]
+                const dirs = ['right', 'left', 'top', 'bottom'];
+                marker.bindTooltip(e.city, {
+                    permanent: true, direction: dirs[idx % 4], className: 'city-label', offset: [12, -12]
+                });
+                
+                markersCluster.addLayer(marker);
             });
-            
-            markersCluster.addLayer(marker);
-        });
 
-        if (filtered.length > 0) {
-            const bounds = L.featureGroup(filtered.map(e => L.marker([e.lat, e.lng]))).getBounds();
-            map.fitBounds(bounds.pad(0.2));
+            if (filtered.length > 0) {
+                const bounds = L.featureGroup(filtered.map(e => L.marker([e.lat, e.lng]))).getBounds();
+                map.fitBounds(bounds.pad(0.2));
+            }
         }
-    }
 
-    countrySelect.addEventListener('change', updateMap);
-    regionSelect.addEventListener('change', updateMap);
-    updateMap();
+        countrySelect.addEventListener('change', updateMap);
+        regionSelect.addEventListener('change', updateMap);
+        updateMap();
+    }
 </script>
 
 </body>
