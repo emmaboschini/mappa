@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mappa Equipaggi Mediterranea - Illustrated</title>
+    <title>Mappa Equipaggi Mediterranea</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
@@ -13,27 +13,25 @@
     
     <style>
         :root { --med-orange: #e94e1b; --med-blue: #18407e; --med-light-blue: #aeddf2; }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Quicksand', sans-serif; background-color: var(--med-light-blue); overflow: hidden; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Quicksand', sans-serif; background-color: var(--med-light-blue); }
         #map { height: 100vh; width: 100%; background-color: var(--med-light-blue); }
 
-        /* Pannello Filtri Illustrated */
         .filter-container {
-            position: absolute; top: 20px; right: 20px; z-index: 5000;
+            position: absolute; top: 20px; right: 20px; z-index: 10000;
             background: white; padding: 15px; border-radius: 20px;
-            box-shadow: 0 5px 0px rgba(24, 64, 126, 0.1); width: 220px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2); width: 220px;
             border: 3px solid var(--med-blue);
         }
-        .filter-title { color: var(--med-orange); font-weight: 900; margin-bottom: 10px; text-transform: uppercase; font-size: 0.8rem; text-align: center; }
-        select { width: 100%; padding: 8px; border-radius: 10px; border: 2px solid var(--med-blue); outline: none; margin-bottom: 8px; font-family: inherit; font-weight: 700; color: var(--med-blue); }
+        .filter-title { color: var(--med-orange); font-weight: 900; text-align: center; margin-bottom: 10px; font-size: 0.8rem; text-transform: uppercase; }
+        select { width: 100%; padding: 8px; border-radius: 10px; border: 2px solid var(--med-blue); font-family: inherit; font-weight: 700; color: var(--med-blue); outline: none; margin-bottom: 5px; }
 
-        /* Etichette città (Arancioni come nell'illustrazione) */
         .city-label {
             background: transparent !important; border: none !important; box-shadow: none !important;
-            color: var(--med-orange); font-weight: 900; font-size: 0.75rem; text-transform: uppercase;
-            text-shadow: 1px 1px 0 #fff; white-space: nowrap;
+            color: var(--med-orange); font-weight: 900; font-size: 0.8rem;
+            text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
+            white-space: nowrap; text-transform: uppercase;
         }
 
-        /* Popup */
         .leaflet-popup-content-wrapper { border-radius: 15px; border: 3px solid var(--med-blue); padding: 0; }
         .popup-header { background: var(--med-blue); color: white; padding: 10px; text-align: center; font-weight: 700; border-radius: 10px 10px 0 0; }
         .social-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 10px; }
@@ -42,11 +40,10 @@
             text-decoration: none; color: white !important; font-size: 0.7rem; font-weight: 700;
             background-color: var(--med-blue);
         }
-        .social-btn:hover { background-color: var(--med-orange); }
 
-        /* Cluster Style */
-        .marker-cluster div { background-color: var(--med-orange); color: white; border: 2px solid white; }
-        .marker-cluster { background-color: rgba(233, 78, 27, 0.2); }
+        /* Marker arancioni come pallini giganti e visibili */
+        .marker-cluster div { background-color: var(--med-orange); color: white; font-weight: 900; border: 2px solid white; }
+        .marker-cluster { background-color: rgba(233, 78, 27, 0.4); }
 
         @media (max-width: 600px) { .filter-container { width: calc(100% - 40px); top: auto; bottom: 20px; } }
     </style>
@@ -55,35 +52,40 @@
 
 <div class="filter-container">
     <div class="filter-title">Equipaggi Terra</div>
-    <select id="country-filter"><option value="all">Tutti i Paesi</option></select>
-    <select id="region-filter" style="display:none;"><option value="all">Tutte le Regioni</option></select>
+    <select id="country-filter"><option value="all">Mondo</option></select>
+    <select id="region-filter" style="display:none;"><option value="all">Regioni</option></select>
 </div>
 
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
 <script>
     const map = L.map('map', { center: [42, 12.5], zoom: 6, zoomControl: false });
 
-    // 1. CARICAMENTO TERRA (SFONDO)
+    // --- CREAZIONE LIVELLI FORZATI ---
+    map.createPane('landPane'); map.getPane('landPane').style.zIndex = 100; // Terra SOTTO
+    map.createPane('markerPane'); map.getPane('markerPane').style.zIndex = 1000; // Punti SOPRA
+    map.createPane('labelPane'); map.getPane('labelPane').style.zIndex = 2000; // Scritte SOPRA TUTTO
+
+    // 1. CARICAMENTO TERRA (SFONDO BIANCO)
     fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
         .then(r => r.json()).then(data => {
-            const land = L.geoJSON(data, {
+            L.geoJSON(data, {
+                pane: 'landPane',
                 interactive: false,
                 style: { fillColor: '#ffffff', fillOpacity: 1, color: '#18407e', weight: 1.5 }
             }).addTo(map);
-            land.bringToBack(); // Forza lo sfondo dietro ai marker
-            
+
             // Regioni Italiane
             return fetch('https://raw.githubusercontent.com/openpolis/geojson-italy/master/geojson/limits_IT_regions.json');
         }).then(r => r.json()).then(data => {
-            const regions = L.geoJSON(data, {
+            L.geoJSON(data, {
+                pane: 'landPane',
                 interactive: false,
                 style: { fillColor: 'transparent', color: '#18407e', weight: 0.5, opacity: 0.3 }
             }).addTo(map);
-            regions.bringToBack();
         });
 
     const dati = [
@@ -138,8 +140,9 @@
         { city: "Vicenza", country: "Italia", region: "Veneto", lat: 45.5479, lng: 11.5497, mail: "mediterranea.vi@gmail.com", fb: "https://www.facebook.com/mediterraneavicenza/", ig: "", x: "" }
     ];
 
+    // Clustering forzato nel piano superiore
     const cluster = L.markerClusterGroup({ 
-        showCoverageOnHover: false, maxClusterRadius: 40
+        showCoverageOnHover: false, maxClusterRadius: 40, clusterPane: 'markerPane' 
     });
     map.addLayer(cluster);
 
@@ -159,14 +162,14 @@
                 (e.x ? `<a href="${e.x}" target="_blank" class="social-btn"><i class="fab fa-x-twitter"></i>X</a>` : '') +
                 `</div>`;
 
-            // Marker a cerchio solido (SVG) - MASSIMA STABILITÀ
+            // Marker Circolare Vettoriale forzato nel piano 'markerPane'
             const m = L.circleMarker([e.lat, e.lng], {
-                radius: 10, fillColor: "#e94e1b", color: "#ffffff", weight: 3, fillOpacity: 1
+                pane: 'markerPane', radius: 10, fillColor: "#e94e1b", color: "#ffffff", weight: 3, fillOpacity: 1
             }).bindPopup(popupHtml);
 
+            // Nomi città forzati nel piano 'labelPane'
             m.bindTooltip(e.city, { 
-                permanent: true, direction: ['top','bottom','left','right'][idx%4], 
-                className: 'city-label', offset: [0, 0] 
+                permanent: true, direction: ['top','bottom','left','right'][idx%4], className: 'city-label', offset: [0,0], pane: 'labelPane'
             });
             cluster.addLayer(m);
         });
