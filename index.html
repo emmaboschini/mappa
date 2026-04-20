@@ -39,11 +39,45 @@
             left: 20px;
             z-index: 1000;
             display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .filter-group {
+            display: flex;
             gap: 10px;
             background: rgba(0, 35, 93, 0.8);
             padding: 10px;
             border-radius: 8px;
             border: 1px solid var(--med-light-blue);
+        }
+
+        .zoom-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            width: 40px;
+        }
+
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            background-color: var(--med-orange);
+            color: var(--med-white);
+            border: none;
+            border-radius: 4px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .zoom-btn:hover {
+            opacity: 0.8;
         }
 
         select {
@@ -165,12 +199,18 @@
 <body>
 
     <div id="controls">
-        <select id="country-filter">
-            <option value="all">Tutti i Paesi</option>
-        </select>
-        <select id="region-filter">
-            <option value="all">Tutte le Regioni</option>
-        </select>
+        <div class="filter-group">
+            <select id="country-filter">
+                <option value="all">Tutti i Paesi</option>
+            </select>
+            <select id="region-filter">
+                <option value="all">Tutte le Regioni</option>
+            </select>
+        </div>
+        <div class="zoom-controls">
+            <button class="zoom-btn" id="zoom-in" title="Aumenta zoom">+</button>
+            <button class="zoom-btn" id="zoom-out" title="Diminuisci zoom">-</button>
+        </div>
     </div>
 
     <div id="map-container">
@@ -226,6 +266,15 @@
             });
 
         svg.call(zoom);
+
+        // Zoom button logic
+        d3.select("#zoom-in").on("click", () => {
+            svg.transition().duration(300).call(zoom.scaleBy, 1.5);
+        });
+
+        d3.select("#zoom-out").on("click", () => {
+            svg.transition().duration(300).call(zoom.scaleBy, 0.6);
+        });
 
         // Load Data
         Promise.all([
