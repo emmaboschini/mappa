@@ -352,14 +352,13 @@
             function focusOnCountry(geoFeature) {
                 let [[x0, y0], [x1, y1]] = path.bounds(geoFeature);
                 
-                // Special case for Netherlands (ID 528) to avoid distant islands
+                // Special case for Netherlands (ID 528) - focused on mainland
                 if (geoFeature.id === "528" || geoFeature.id === 528) {
-                    // Force a bounding box that only covers European Netherlands
                     const [[nx0, ny0], [nx1, ny1]] = path.bounds({
                         type: "Feature",
                         geometry: {
                             type: "Polygon",
-                            coordinates: [[[3, 50], [8, 50], [8, 54], [3, 54], [3, 50]]]
+                            coordinates: [[[3.2, 50.7], [7.3, 50.7], [7.3, 53.6], [3.2, 53.6], [3.2, 50.7]]]
                         }
                     });
                     [x0, y0, x1, y1] = [nx0, ny0, nx1, ny1];
@@ -371,7 +370,7 @@
                         type: "Feature",
                         geometry: {
                             type: "Polygon",
-                            coordinates: [[[-10, 35], [5, 35], [5, 44], [-10, 44], [-10, 35]]]
+                            coordinates: [[[-9.5, 35.8], [4.5, 35.8], [4.5, 43.8], [-9.5, 43.8], [-9.5, 35.8]]]
                         }
                     });
                     [x0, y0, x1, y1] = [nx0, ny0, nx1, ny1];
@@ -382,11 +381,10 @@
                 const x = (x0 + x1) / 2;
                 const y = (y0 + y1) / 2;
                 
-                // Allow deeper zoom for smaller countries
-                let maxZoom = 10;
-                if (geoFeature.id === "056" || geoFeature.id === "528") maxZoom = 15;
+                // Set a reasonable max zoom for all
+                let maxZoom = 8; 
 
-                const scale = Math.min(maxZoom, 0.8 / Math.max(dx / width, dy / height));
+                const scale = Math.min(maxZoom, 0.7 / Math.max(dx / width, dy / height));
                 const translate = [width / 2 - scale * x, height / 2 - scale * y];
 
                 svg.transition()
