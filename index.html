@@ -164,11 +164,25 @@
     // Initialize the map
     const map = L.map('map').setView([41.9028, 12.4964], 6); // Centered on Italy
 
-    // Add Tile Layer (OpenStreetMap.it provides Italian labels globally)
-    L.tileLayer('https://{s}.tile.openstreetmap.it/{z}/{x}/{y}.png', {
+    // Add Tile Layer (OpenStreetMap.it with osmitaly path for Italian labels)
+    const osmItaly = L.tileLayer('https://{s}.tile.openstreetmap.it/osmitaly/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributori | <a href="https://www.openstreetmap.it/">OpenStreetMap Italia</a>',
         maxZoom: 19
-    }).addTo(map);
+    });
+
+    const osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributori',
+        maxZoom: 19
+    });
+
+    // Try to load OSM Italy, fallback to standard if error
+    osmItaly.addTo(map);
+
+    osmItaly.on('tileerror', function() {
+        console.warn("Errore nel caricamento delle mappe in italiano. Caricamento mappa standard.");
+        map.removeLayer(osmItaly);
+        osmStandard.addTo(map);
+    });
 
     // Data from CSV geocoded with Country and Region
     const equipaggi = [
