@@ -124,6 +124,21 @@
             font-size: 1.1rem;
         }
 
+        /* Tooltip Styling */
+        .city-tooltip {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--med-blue);
+            border-radius: 4px;
+            color: var(--med-blue);
+            font-weight: 700;
+            padding: 2px 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            font-family: 'Gotham', 'Montserrat', sans-serif;
+        }
+        .city-tooltip::before {
+            border-right-color: var(--med-blue) !important;
+        }
+
         /* Responsive adjustments */
         @media (max-width: 600px) {
             .filter-container {
@@ -164,25 +179,12 @@
     // Initialize the map
     const map = L.map('map').setView([41.9028, 12.4964], 6); // Centered on Italy
 
-    // Add Tile Layer (OpenStreetMap.it with osmitaly path for Italian labels)
-    const osmItaly = L.tileLayer('https://{s}.tile.openstreetmap.it/osmitaly/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributori | <a href="https://www.openstreetmap.it/">OpenStreetMap Italia</a>',
-        maxZoom: 19
-    });
-
-    const osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributori',
-        maxZoom: 19
-    });
-
-    // Try to load OSM Italy, fallback to standard if error
-    osmItaly.addTo(map);
-
-    osmItaly.on('tileerror', function() {
-        console.warn("Errore nel caricamento delle mappe in italiano. Caricamento mappa standard.");
-        map.removeLayer(osmItaly);
-        osmStandard.addTo(map);
-    });
+    // Add Tile Layer (CartoDB Positron No Labels for a clean map)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributori &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20
+    }).addTo(map);
 
     // Data from CSV geocoded with Country and Region
     const equipaggi = [
@@ -302,6 +304,12 @@
 
             L.marker([item.lat, item.lng], { icon: medIcon })
                 .bindPopup(popupContent)
+                .bindTooltip(item.city, { 
+                    permanent: true, 
+                    direction: 'right',
+                    offset: [15, -15],
+                    className: 'city-tooltip'
+                })
                 .addTo(markersLayer);
         });
 
