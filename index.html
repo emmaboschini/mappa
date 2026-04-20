@@ -335,15 +335,6 @@
             d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json")
         ]).then(([world]) => {
             
-            const isoToName = {
-                "380": "Italia",
-                "724": "Spagna",
-                "276": "Germania",
-                "056": "Belgio",
-                "528": "Paesi Bassi",
-                "756": "Svizzera"
-            };
-
             const locations = [
   {
     "name": "Alcamo",
@@ -886,29 +877,6 @@
   }
 ];
 
-            function focusOnCountry(countryName) {
-                const countryLocs = locations.filter(loc => loc.country === countryName);
-                if (countryLocs.length === 0) return;
-
-                const lats = countryLocs.map(d => d.lat);
-                const lons = countryLocs.map(d => d.lon);
-                const minLat = Math.min(...lats), maxLat = Math.max(...lats);
-                const minLon = Math.min(...lons), maxLon = Math.max(...lons);
-
-                const p0 = projection([minLon, minLat]), p1 = projection([maxLon, maxLat]);
-                const x0 = Math.min(p0[0], p1[0]), y0 = Math.min(p0[1], p1[1]);
-                const x1 = Math.max(p0[0], p1[0]), y1 = Math.max(p0[1], p1[1]);
-                
-                const dx = x1 - x0 || 40, dy = y1 - y0 || 40;
-                const x = (x0 + x1) / 2, y = (y0 + y1) / 2;
-                
-                const scale = Math.min(8, 0.6 / Math.max(dx / width, dy / height));
-                const translate = [width / 2 - scale * x, height / 2 - scale * y];
-
-                svg.transition().duration(1000)
-                    .call(zoom.transform, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale));
-            }
-
             const countries = topojson.feature(world, world.objects.countries);
             const moroccoIds = [504, 732];
             const otherCountries = countries.features.filter(d => !moroccoIds.includes(+d.id));
@@ -918,21 +886,14 @@
                 .data(otherCountries)
                 .enter().append("path")
                 .attr("class", "country-path")
-                .attr("d", path)
-                .on("click", (event, d) => {
-                    const countryName = isoToName[String(+d.id)];
-                    if (countryName) focusOnCountry(countryName);
-                });
+                .attr("d", path);
 
             if (moroccoFeatures.length > 0) {
                 const unifiedMorocco = topojson.merge(world, world.objects.countries.geometries.filter(d => moroccoIds.includes(+d.id)));
                 g.append("path")
                     .datum(unifiedMorocco)
                     .attr("class", "country-path")
-                    .attr("d", path)
-                    .on("click", (event, d) => {
-                        focusOnCountry("Marocco");
-                    });
+                    .attr("d", path);
             }
 
             const markerGroups = g.selectAll(".marker-group")
@@ -1004,7 +965,6 @@
                     const regionMatch = selectedRegion === "all" || d.region === selectedRegion;
                     return (countryMatch && regionMatch) ? "block" : "none";
                 });
-                if (selectedCountry !== "all") focusOnCountry(selectedCountry);
                 hidePopup();
             }
 
