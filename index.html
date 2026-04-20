@@ -15,24 +15,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        :root { --med-orange: #e94e1b; --med-blue: #18407e; --med-white: #ffffff; }
+        :root { --med-orange: #e94e1b; --med-blue: #18407e; --med-light-blue: #388ecd; --med-white: #ffffff; }
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Montserrat', sans-serif; overflow: hidden; }
         
-        /* EFFETTO MAPPA PROFESSIONALE: Trasforma OSM nei colori di Mediterranea */
+        /* EFFETTO MAPPA PROFESSIONALE: Terra Blu e Mare Azzurro */
         #map { 
             height: 100vh; width: 100%; 
-            background-color: var(--med-blue); 
+            background-color: var(--med-light-blue); /* Mare Azzurro Mediterranea */
         }
         
-        /* Filtro per rendere la mappa Blu e Bianca senza strade pesanti */
+        /* Filtro CSS per rendere la terra blu scuro mantenendo la struttura stabile */
         .leaflet-tile-pane {
-            filter: brightness(0.6) invert(100%) contrast(3) hue-rotate(180deg) saturate(0.3) brightness(1.5);
+            filter: brightness(0.4) invert(1) hue-rotate(170deg) saturate(2) brightness(0.7);
         }
 
-        /* Filtri UI */
+        /* Pannello Filtri */
         .filter-container {
             position: absolute; top: 20px; right: 20px; z-index: 5000;
-            background: white; padding: 20px; border-radius: 12px;
+            background: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.4); width: 230px;
             border-top: 5px solid var(--med-orange);
         }
@@ -42,12 +42,12 @@
         /* Etichette città */
         .city-label {
             background: transparent !important; border: none !important; box-shadow: none !important;
-            color: #000; font-weight: 800; font-size: 0.75rem;
-            text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
+            color: #fff; font-weight: 800; font-size: 0.75rem;
+            text-shadow: 1px 1px 2px #000;
             white-space: nowrap;
         }
 
-        /* Popup */
+        /* Popup Professionale */
         .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; overflow: hidden; }
         .leaflet-popup-content { margin: 0 !important; width: 240px !important; }
         .popup-header { background: var(--med-blue); color: white; padding: 12px; text-align: center; font-weight: 700; }
@@ -59,8 +59,8 @@
             background-color: var(--med-blue); transition: 0.2s;
         }
         .social-btn:hover { background-color: var(--med-orange); }
-        .social-btn i { margin-right: 5px; }
 
+        /* Cluster */
         .marker-cluster div { background-color: var(--med-orange); color: white; font-weight: 700; }
         .marker-cluster { background-color: rgba(233, 78, 27, 0.4); }
 
@@ -83,7 +83,7 @@
 <script>
     const map = L.map('map', { center: [42.5, 12.5], zoom: 6 });
 
-    // Sfondo ultra-stabile con stile "Minimalist Blue" tramite CSS
+    // Sfondo ultra-stabile (No Labels) trasformato via CSS
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap'
     }).addTo(map);
@@ -163,14 +163,12 @@
                     </div>
                 </div>`;
 
-            // Marker Vettoriale (SVG) - Impossibile da coprire o bloccare
             const m = L.circleMarker([d.lat, d.lng], {
                 radius: 10, fillColor: "#e94e1b", color: "#ffffff", weight: 3, fillOpacity: 1
             }).bindPopup(popup);
 
-            const dirs = ['right','left','top','bottom'];
             m.bindTooltip(d.city, { 
-                permanent: true, direction: dirs[i%4], className: 'city-label', offset: [12, -12] 
+                permanent: true, direction: ['top','bottom','left','right'][i%4], className: 'city-label', offset: [0, 0] 
             });
             cluster.addLayer(m);
         });
