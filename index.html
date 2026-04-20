@@ -3,79 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mappa Equipaggi Mediterranea - Illustrated Style</title>
+    <title>Mappa Equipaggi Mediterranea - Illustrated</title>
     
-    <!-- Leaflet & Plugins -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-    
-    <!-- Font e Icone -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Quicksand:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@700&display=swap" rel="stylesheet">
     
     <style>
-        :root { 
-            --med-orange: #e94e1b; 
-            --med-blue: #18407e; 
-            --med-light-blue: #aeddf2; /* Soft blue like the image */
-            --med-white: #ffffff;
-        }
-
+        :root { --med-orange: #e94e1b; --med-blue: #18407e; --med-light-blue: #aeddf2; }
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Quicksand', sans-serif; background-color: var(--med-light-blue); overflow: hidden; }
-        
-        /* IL MARE: Sfondo azzurro pastello come nel file fun-usa-map.jpg */
-        #map { 
-            height: 100vh; width: 100%; 
-            background-color: var(--med-light-blue); 
-        }
+        #map { height: 100vh; width: 100%; background-color: var(--med-light-blue); }
 
-        /* Pannello Filtri - Stile "Card" pulita */
+        /* Pannello Filtri Illustrated */
         .filter-container {
             position: absolute; top: 20px; right: 20px; z-index: 5000;
-            background: white; padding: 20px; border-radius: 20px;
-            box-shadow: 0 8px 0px rgba(24, 64, 126, 0.1); width: 240px;
+            background: white; padding: 15px; border-radius: 20px;
+            box-shadow: 0 5px 0px rgba(24, 64, 126, 0.1); width: 220px;
             border: 3px solid var(--med-blue);
         }
-        .filter-title { color: var(--med-orange); font-weight: 900; margin-bottom: 15px; text-transform: uppercase; font-size: 1rem; letter-spacing: 1px; text-align: center; }
-        select { width: 100%; padding: 10px; border-radius: 12px; border: 2px solid var(--med-blue); outline: none; margin-bottom: 10px; font-family: inherit; font-weight: 700; color: var(--med-blue); cursor: pointer; }
+        .filter-title { color: var(--med-orange); font-weight: 900; margin-bottom: 10px; text-transform: uppercase; font-size: 0.8rem; text-align: center; }
+        select { width: 100%; padding: 8px; border-radius: 10px; border: 2px solid var(--med-blue); outline: none; margin-bottom: 8px; font-family: inherit; font-weight: 700; color: var(--med-blue); }
 
-        /* Etichette città - Stile "Scritto sulla mappa" come l'immagine */
+        /* Etichette città (Arancioni come nell'illustrazione) */
         .city-label {
             background: transparent !important; border: none !important; box-shadow: none !important;
-            color: var(--med-orange); font-weight: 900; font-size: 0.75rem;
-            text-transform: uppercase; letter-spacing: 0.5px;
-            white-space: nowrap;
+            color: var(--med-orange); font-weight: 900; font-size: 0.75rem; text-transform: uppercase;
+            text-shadow: 1px 1px 0 #fff; white-space: nowrap;
         }
 
-        /* I POPUP - Moderni e puliti */
-        .leaflet-popup-content-wrapper { border-radius: 20px; padding: 0; border: 4px solid var(--med-blue); }
-        .popup-header { background: var(--med-blue); color: white; padding: 12px; text-align: center; font-weight: 900; text-transform: uppercase; border-radius: 12px 12px 0 0; }
-        .popup-body { padding: 15px; }
-        .social-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        /* Popup */
+        .leaflet-popup-content-wrapper { border-radius: 15px; border: 3px solid var(--med-blue); padding: 0; }
+        .popup-header { background: var(--med-blue); color: white; padding: 10px; text-align: center; font-weight: 700; border-radius: 10px 10px 0 0; }
+        .social-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 10px; }
         .social-btn {
-            display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 8px;
             text-decoration: none; color: white !important; font-size: 0.7rem; font-weight: 700;
-            background-color: var(--med-blue); transition: 0.2s;
+            background-color: var(--med-blue);
         }
-        .social-btn:hover { background-color: var(--med-orange); transform: scale(1.05); }
+        .social-btn:hover { background-color: var(--med-orange); }
 
-        /* MARKER STYLE: "Sticker" circular arancione con bordo bianco */
-        .sticker-marker {
-            width: 24px; height: 24px;
-            background: var(--med-orange);
-            border: 3px solid white;
-            border-radius: 50%;
-            box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
-            display: flex; align-items: center; justify-content: center;
-        }
-        .sticker-marker i { color: white; font-size: 12px; }
-
-        /* Cluster colorati arancione come adesivi */
-        .marker-cluster div { background-color: var(--med-orange); color: white; font-weight: 900; border: 3px solid white; border-radius: 50%; }
+        /* Cluster Style */
+        .marker-cluster div { background-color: var(--med-orange); color: white; border: 2px solid white; }
         .marker-cluster { background-color: rgba(233, 78, 27, 0.2); }
 
-        @media (max-width: 600px) { .filter-container { width: calc(100% - 40px); top: auto; bottom: 20px; right: 20px; } }
+        @media (max-width: 600px) { .filter-container { width: calc(100% - 40px); top: auto; bottom: 20px; } }
     </style>
 </head>
 <body>
@@ -89,40 +62,28 @@
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/markercluster.js"></script>
 
 <script>
-    const map = L.map('map', { 
-        center: [42.5, 12.5], 
-        zoom: 6, 
-        zoomControl: false,
-        attributionControl: false
-    });
+    const map = L.map('map', { center: [42, 12.5], zoom: 6, zoomControl: false });
 
-    // Piani di visualizzazione
-    map.createPane('landPane'); map.getPane('landPane').style.zIndex = 200;
-    map.createPane('labelPane'); map.getPane('labelPane').style.zIndex = 650;
-
-    // 1. DISEGNO TERRA (BIANCA) - Come l'illustrazione
+    // 1. CARICAMENTO TERRA (SFONDO)
     fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
         .then(r => r.json()).then(data => {
-            L.geoJSON(data, {
-                pane: 'landPane',
+            const land = L.geoJSON(data, {
                 interactive: false,
-                style: { 
-                    fillColor: '#ffffff', fillOpacity: 1, 
-                    color: '#18407e', weight: 1.5 // Confini blu scuro sottili
-                }
+                style: { fillColor: '#ffffff', fillOpacity: 1, color: '#18407e', weight: 1.5 }
             }).addTo(map);
-
-            // Confini Regioni Italiane sottili
+            land.bringToBack(); // Forza lo sfondo dietro ai marker
+            
+            // Regioni Italiane
             return fetch('https://raw.githubusercontent.com/openpolis/geojson-italy/master/geojson/limits_IT_regions.json');
         }).then(r => r.json()).then(data => {
-            L.geoJSON(data, {
-                pane: 'landPane',
+            const regions = L.geoJSON(data, {
                 interactive: false,
                 style: { fillColor: 'transparent', color: '#18407e', weight: 0.5, opacity: 0.3 }
             }).addTo(map);
+            regions.bringToBack();
         });
 
     const dati = [
@@ -178,7 +139,7 @@
     ];
 
     const cluster = L.markerClusterGroup({ 
-        showCoverageOnHover: false, maxClusterRadius: 40, clusterPane: 'labelPane'
+        showCoverageOnHover: false, maxClusterRadius: 40
     });
     map.addLayer(cluster);
 
@@ -191,33 +152,28 @@
         const filtrati = dati.filter(e => (cVal === "all" || e.country === cVal) && (rVal === "all" || e.region === rVal));
 
         filtrati.forEach((e, idx) => {
-            const popupHtml = `<div class="popup-header">${e.city}</div><div class="popup-body"><div class="social-grid">` +
+            const popupHtml = `<div class="popup-header">${e.city}</div><div class="social-grid">` +
                 (e.mail ? `<a href="mailto:${e.mail}" class="social-btn"><i class="fas fa-envelope"></i>Email</a>` : '') +
                 (e.fb ? `<a href="${e.fb}" target="_blank" class="social-btn"><i class="fab fa-facebook-f"></i>FB</a>` : '') +
                 (e.ig ? `<a href="${e.ig}" target="_blank" class="social-btn"><i class="fab fa-instagram"></i>IG</a>` : '') +
                 (e.x ? `<a href="${e.x}" target="_blank" class="social-btn"><i class="fab fa-x-twitter"></i>X</a>` : '') +
-                `</div></div>`;
+                `</div>`;
 
-            // MARKER "STICKER" STYLE
-            const m = L.marker([e.lat, e.lng], {
-                pane: 'labelPane',
-                icon: L.divIcon({
-                    className: 'custom-sticker',
-                    html: '<div class="sticker-marker"><i class="fas fa-anchor"></i></div>',
-                    iconSize: [24, 24], iconAnchor: [12, 12]
-                })
+            // Marker a cerchio solido (SVG) - MASSIMA STABILITÀ
+            const m = L.circleMarker([e.lat, e.lng], {
+                radius: 10, fillColor: "#e94e1b", color: "#ffffff", weight: 3, fillOpacity: 1
             }).bindPopup(popupHtml);
 
-            // Nomi arancioni e bold come nell'immagine
             m.bindTooltip(e.city, { 
                 permanent: true, direction: ['top','bottom','left','right'][idx%4], 
-                className: 'city-label', offset: [0,0], pane: 'labelPane' 
+                className: 'city-label', offset: [0, 0] 
             });
             cluster.addLayer(m);
         });
         if (filtrati.length > 0) map.fitBounds(L.featureGroup(filtrati.map(e => L.marker([e.lat, e.lng]))).getBounds().pad(0.2));
     }
 
+    // Inizializza Filtri
     const countries = [...new Set(dati.map(e => e.country))].sort();
     countries.forEach(c => { const o = document.createElement('option'); o.value = o.textContent = c; document.getElementById('country-filter').appendChild(o); });
     const regions = [...new Set(dati.filter(e => e.country === "Italia").map(e => e.region))].sort();
