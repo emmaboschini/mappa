@@ -3,85 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mappa Equipaggi Mediterranea</title>
+    <title>Mappa Equipaggi Mediterranea - Illustrated Style</title>
     
+    <!-- Leaflet & Plugins -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    
+    <!-- Font e Icone -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Quicksand:wght@700&display=swap" rel="stylesheet">
     
     <style>
-        :root { --med-orange: #e94e1b; --med-blue: #18407e; --med-light-blue: #388ecd; }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Montserrat', sans-serif; background-color: var(--med-blue); overflow: hidden; }
+        :root { 
+            --med-orange: #e94e1b; 
+            --med-blue: #18407e; 
+            --med-light-blue: #aeddf2; /* Soft blue like the image */
+            --med-white: #ffffff;
+        }
+
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Quicksand', sans-serif; background-color: var(--med-light-blue); overflow: hidden; }
         
-        /* STILE GEN Z: Mappa Digitale ad alto contrasto */
+        /* IL MARE: Sfondo azzurro pastello come nel file fun-usa-map.jpg */
         #map { 
             height: 100vh; width: 100%; 
             background-color: var(--med-light-blue); 
         }
 
-        /* Filtro CSS Moderno per Terra Blu e Mare Azzurro */
-        .leaflet-tile-pane {
-            filter: brightness(0.6) invert(100%) contrast(3) hue-rotate(190deg) saturate(1.5);
-        }
-
-        /* Pannello Filtri Moderno */
+        /* Pannello Filtri - Stile "Card" pulita */
         .filter-container {
             position: absolute; top: 20px; right: 20px; z-index: 5000;
-            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px);
-            padding: 20px; border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3); width: 240px;
-            border: 2px solid var(--med-orange);
+            background: white; padding: 20px; border-radius: 20px;
+            box-shadow: 0 8px 0px rgba(24, 64, 126, 0.1); width: 240px;
+            border: 3px solid var(--med-blue);
         }
-        .filter-title { color: var(--med-blue); font-weight: 900; margin-bottom: 15px; text-transform: uppercase; font-size: 1rem; letter-spacing: 2px; }
-        select { width: 100%; padding: 12px; border-radius: 10px; border: none; background: white; margin-bottom: 10px; font-family: inherit; font-weight: 700; color: var(--med-blue); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .filter-title { color: var(--med-orange); font-weight: 900; margin-bottom: 15px; text-transform: uppercase; font-size: 1rem; letter-spacing: 1px; text-align: center; }
+        select { width: 100%; padding: 10px; border-radius: 12px; border: 2px solid var(--med-blue); outline: none; margin-bottom: 10px; font-family: inherit; font-weight: 700; color: var(--med-blue); cursor: pointer; }
 
-        /* Effetto Pulsante per i Pin (Gen Z Style) */
-        .pulse-marker {
-            width: 16px; height: 16px;
-            background: var(--med-orange);
-            border: 2px solid white;
-            border-radius: 50%;
-            box-shadow: 0 0 0 rgba(233, 78, 27, 0.4);
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(233, 78, 27, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(233, 78, 27, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(233, 78, 27, 0); }
-        }
-
-        /* Etichette città */
+        /* Etichette città - Stile "Scritto sulla mappa" come l'immagine */
         .city-label {
             background: transparent !important; border: none !important; box-shadow: none !important;
-            color: #ffffff; font-weight: 900; font-size: 0.8rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            color: var(--med-orange); font-weight: 900; font-size: 0.75rem;
+            text-transform: uppercase; letter-spacing: 0.5px;
             white-space: nowrap;
         }
 
-        /* Popup Moderno */
-        .leaflet-popup-content-wrapper { border-radius: 20px; padding: 0; background: rgba(255,255,255,0.95); }
-        .popup-header { background: var(--med-blue); color: white; padding: 15px; text-align: center; font-weight: 900; text-transform: uppercase; border-radius: 20px 20px 0 0; }
+        /* I POPUP - Moderni e puliti */
+        .leaflet-popup-content-wrapper { border-radius: 20px; padding: 0; border: 4px solid var(--med-blue); }
+        .popup-header { background: var(--med-blue); color: white; padding: 12px; text-align: center; font-weight: 900; text-transform: uppercase; border-radius: 12px 12px 0 0; }
         .popup-body { padding: 15px; }
-        .social-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .social-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .social-btn {
-            display: flex; align-items: center; justify-content: center; padding: 12px; border-radius: 12px;
-            text-decoration: none; color: white !important; font-size: 0.8rem; font-weight: 700;
-            background-color: var(--med-blue); transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 10px;
+            text-decoration: none; color: white !important; font-size: 0.7rem; font-weight: 700;
+            background-color: var(--med-blue); transition: 0.2s;
         }
-        .social-btn:hover { background-color: var(--med-orange); transform: scale(1.1); }
+        .social-btn:hover { background-color: var(--med-orange); transform: scale(1.05); }
 
-        /* Cluster Moderno */
-        .marker-cluster div { background-color: var(--med-orange); color: white; font-weight: 900; font-size: 1rem; }
-        .marker-cluster { background-color: rgba(233, 78, 27, 0.3); border-radius: 50%; }
+        /* MARKER STYLE: "Sticker" circular arancione con bordo bianco */
+        .sticker-marker {
+            width: 24px; height: 24px;
+            background: var(--med-orange);
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .sticker-marker i { color: white; font-size: 12px; }
+
+        /* Cluster colorati arancione come adesivi */
+        .marker-cluster div { background-color: var(--med-orange); color: white; font-weight: 900; border: 3px solid white; border-radius: 50%; }
+        .marker-cluster { background-color: rgba(233, 78, 27, 0.2); }
+
+        @media (max-width: 600px) { .filter-container { width: calc(100% - 40px); top: auto; bottom: 20px; right: 20px; } }
     </style>
 </head>
 <body>
 
 <div class="filter-container">
-    <div class="filter-title">Live Map</div>
-    <select id="country-filter"><option value="all">Mondo</option></select>
-    <select id="region-filter" style="display:none;"><option value="all">Regioni</option></select>
+    <div class="filter-title">Equipaggi Terra</div>
+    <select id="country-filter"><option value="all">Tutti i Paesi</option></select>
+    <select id="region-filter" style="display:none;"><option value="all">Tutte le Regioni</option></select>
 </div>
 
 <div id="map"></div>
@@ -90,10 +92,38 @@
 <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
 <script>
-    const map = L.map('map', { center: [42.5, 12.5], zoom: 6, zoomControl: false });
+    const map = L.map('map', { 
+        center: [42.5, 12.5], 
+        zoom: 6, 
+        zoomControl: false,
+        attributionControl: false
+    });
 
-    // Sfondo ultra-stabile (Nativo del browser)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png').addTo(map);
+    // Piani di visualizzazione
+    map.createPane('landPane'); map.getPane('landPane').style.zIndex = 200;
+    map.createPane('labelPane'); map.getPane('labelPane').style.zIndex = 650;
+
+    // 1. DISEGNO TERRA (BIANCA) - Come l'illustrazione
+    fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
+        .then(r => r.json()).then(data => {
+            L.geoJSON(data, {
+                pane: 'landPane',
+                interactive: false,
+                style: { 
+                    fillColor: '#ffffff', fillOpacity: 1, 
+                    color: '#18407e', weight: 1.5 // Confini blu scuro sottili
+                }
+            }).addTo(map);
+
+            // Confini Regioni Italiane sottili
+            return fetch('https://raw.githubusercontent.com/openpolis/geojson-italy/master/geojson/limits_IT_regions.json');
+        }).then(r => r.json()).then(data => {
+            L.geoJSON(data, {
+                pane: 'landPane',
+                interactive: false,
+                style: { fillColor: 'transparent', color: '#18407e', weight: 0.5, opacity: 0.3 }
+            }).addTo(map);
+        });
 
     const dati = [
         { city: "Alcamo", country: "Italia", region: "Sicilia", lat: 37.9757, lng: 12.9647, mail: "mediterraneaalcamo@gmail.com", fb: "https://www.facebook.com/mediterraneaalcamo/", ig: "https://www.instagram.com/mediterraneapesaro/", x: "" },
@@ -147,7 +177,9 @@
         { city: "Vicenza", country: "Italia", region: "Veneto", lat: 45.5479, lng: 11.5497, mail: "mediterranea.vi@gmail.com", fb: "https://www.facebook.com/mediterraneavicenza/", ig: "", x: "" }
     ];
 
-    const cluster = L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 40 });
+    const cluster = L.markerClusterGroup({ 
+        showCoverageOnHover: false, maxClusterRadius: 40, clusterPane: 'labelPane'
+    });
     map.addLayer(cluster);
 
     function updateMap() {
@@ -166,16 +198,21 @@
                 (e.x ? `<a href="${e.x}" target="_blank" class="social-btn"><i class="fab fa-x-twitter"></i>X</a>` : '') +
                 `</div></div>`;
 
-            // MARKER MODERNO: Pulsante e Vettoriale
+            // MARKER "STICKER" STYLE
             const m = L.marker([e.lat, e.lng], {
+                pane: 'labelPane',
                 icon: L.divIcon({
-                    className: 'custom-icon',
-                    html: '<div class="pulse-marker"></div>',
-                    iconSize: [20, 20], iconAnchor: [10, 10]
+                    className: 'custom-sticker',
+                    html: '<div class="sticker-marker"><i class="fas fa-anchor"></i></div>',
+                    iconSize: [24, 24], iconAnchor: [12, 12]
                 })
             }).bindPopup(popupHtml);
 
-            m.bindTooltip(e.city, { permanent: true, direction: ['top','bottom','left','right'][idx%4], className: 'city-label', offset: [0,0] });
+            // Nomi arancioni e bold come nell'immagine
+            m.bindTooltip(e.city, { 
+                permanent: true, direction: ['top','bottom','left','right'][idx%4], 
+                className: 'city-label', offset: [0,0], pane: 'labelPane' 
+            });
             cluster.addLayer(m);
         });
         if (filtrati.length > 0) map.fitBounds(L.featureGroup(filtrati.map(e => L.marker([e.lat, e.lng]))).getBounds().pad(0.2));
