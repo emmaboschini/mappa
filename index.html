@@ -774,20 +774,13 @@
   }
 ];
             
-            // Draw World (Filtered to Europe for a cleaner look and to solve the Morocco issue)
-            const europeanIsoCodes = [
-                "008", "020", "040", "056", "070", "100", "191", "196", "203", "208", 
-                "233", "246", "250", "276", "300", "348", "352", "372", "380", "428", 
-                "438", "440", "442", "470", "492", "498", "499", "528", "578", "616", 
-                "620", "642", "674", "688", "703", "705", "724", "752", "756", "804", 
-                "807", "826", "336"
-            ];
-
+            // Draw World
             const countries = topojson.feature(world, world.objects.countries);
-            const europeFeatures = countries.features.filter(d => europeanIsoCodes.includes(d.id));
             
+            // Merge Morocco (504) and Western Sahara (732) for a cleaner look if they are separate
+            // Some datasets treat them as one, others split them with a jagged line
             g.selectAll(".country-path")
-                .data(europeFeatures)
+                .data(countries.features)
                 .enter().append("path")
                 .attr("class", "country-path")
                 .attr("d", path);
