@@ -4,15 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mappa Equipaggi Mediterranea</title>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <!-- MarkerCluster CSS -->
+    
+    <!-- Leaflet & Plugins -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-    <!-- Font Awesome for Social Icons -->
+    
+    <!-- Font & Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --med-orange: #e94e1b;
@@ -20,142 +21,106 @@
             --med-light-blue: #388ecd;
             --med-white: #ffffff;
         }
+
         body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            font-family: 'Gotham', 'Montserrat', sans-serif;
+            margin: 0; padding: 0; height: 100%;
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--med-blue);
             overflow: hidden;
         }
+
         #map {
-            height: 100vh;
-            width: 100%;
-            z-index: 1;
+            height: 100vh; width: 100%;
             background-color: var(--med-blue);
         }
-        /* Filter Control Styling */
+
+        /* Pannello Filtri */
         .filter-container {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            width: 250px;
-            max-height: 80vh;
-            overflow-y: auto;
+            position: absolute; top: 20px; right: 20px;
+            z-index: 1000; background: rgba(255, 255, 255, 0.95);
+            padding: 20px; border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            width: 260px; border-top: 4px solid var(--med-orange);
         }
+
         .filter-title {
-            color: var(--med-blue);
-            font-weight: 700;
-            margin-bottom: 10px;
-            font-size: 1rem;
-            border-bottom: 2px solid var(--med-orange);
-            padding-bottom: 5px;
-        }
-        .filter-group {
-            margin-bottom: 15px;
-        }
-        .filter-label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 700;
-            margin-bottom: 5px;
-            color: #555;
-        }
-        select {
-            width: 100%;
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            font-family: inherit;
-            font-size: 0.9rem;
-            outline: none;
-        }
-        select:focus {
-            border-color: var(--med-light-blue);
+            color: var(--med-blue); font-weight: 700;
+            margin-bottom: 15px; font-size: 1.1rem;
+            text-transform: uppercase; letter-spacing: 1px;
         }
 
-        /* Popup Styling */
-        .leaflet-popup-content-wrapper {
-            border-radius: 8px;
-            padding: 5px;
-            box-shadow: 0 3px 14px rgba(0,0,0,0.4);
-        }
-        .leaflet-popup-content {
-            margin: 15px;
-            min-width: 200px;
-        }
-        .popup-title {
-            color: var(--med-blue);
-            font-weight: 700;
-            font-size: 1.2rem;
-            margin-bottom: 15px;
-            border-bottom: 2px solid var(--med-orange);
-            padding-bottom: 5px;
-            text-align: center;
-        }
-        .social-buttons {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-        .social-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px;
-            border-radius: 4px;
-            text-decoration: none;
-            color: #ffffff !important;
-            font-size: 0.9rem;
-            transition: transform 0.2s, opacity 0.2s;
-            border: none;
-            cursor: pointer;
-            background-color: var(--med-blue);
-        }
-        .social-btn:hover {
-            transform: scale(1.05);
-            opacity: 0.9;
-            color: #ffffff !important;
-            background-color: var(--med-light-blue);
-        }
+        .filter-group { margin-bottom: 15px; }
         
-        .social-btn i {
-            margin-right: 8px;
-            font-size: 1.1rem;
+        .filter-label {
+            display: block; font-size: 0.8rem;
+            font-weight: 700; margin-bottom: 6px;
+            color: var(--med-blue); opacity: 0.8;
         }
 
-        /* Tooltip Styling */
-        .city-tooltip {
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-            color: var(--med-blue);
-            font-weight: 700;
-            font-size: 0.7rem;
+        select {
+            width: 100%; padding: 10px;
+            border-radius: 6px; border: 1px solid #ddd;
+            font-family: inherit; font-size: 0.9rem;
+            color: var(--med-blue); outline: none;
+            cursor: pointer; transition: border 0.2s;
+        }
+
+        select:focus { border-color: var(--med-orange); }
+
+        /* Popup Professionali */
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px; padding: 0; overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .leaflet-popup-content { margin: 0 !important; width: 220px !important; }
+
+        .popup-header {
+            background: var(--med-blue); color: white;
+            padding: 15px; text-align: center;
+            font-weight: 700; font-size: 1.1rem;
+        }
+
+        .popup-body { padding: 15px; }
+
+        .social-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+        }
+
+        .social-btn {
+            display: flex; align-items: center; justify-content: center;
+            padding: 10px; border-radius: 6px;
+            text-decoration: none; color: white !important;
+            font-size: 0.8rem; font-weight: 700;
+            background-color: var(--med-blue);
+            transition: all 0.2s;
+        }
+
+        .social-btn:hover {
+            background-color: var(--med-orange);
+            transform: translateY(-2px);
+        }
+
+        .social-btn i { font-size: 1rem; margin-right: 5px; }
+
+        /* Etichette città */
+        .city-label {
+            background: transparent !important; border: none !important;
+            box-shadow: none !important; color: var(--med-blue);
+            font-weight: 700; font-size: 0.75rem;
             text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
-            white-space: nowrap;
-        }
-        .city-tooltip::before {
-            display: none !important;
         }
 
-        /* Cluster Styling */
-        .marker-cluster-small { background-color: rgba(233, 78, 27, 0.4) !important; }
-        .marker-cluster-small div { background-color: rgba(233, 78, 27, 0.8) !important; color: white !important; }
-        .marker-cluster-medium { background-color: rgba(24, 64, 126, 0.4) !important; }
-        .marker-cluster-medium div { background-color: rgba(24, 64, 126, 0.8) !important; color: white !important; }
+        /* Cluster Style */
+        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large { background: none; }
+        .marker-cluster div {
+            background-color: var(--med-orange); color: white;
+            font-family: 'Montserrat', sans-serif; font-weight: 700;
+        }
 
-        /* Responsive adjustments */
         @media (max-width: 600px) {
             .filter-container {
-                width: calc(100% - 40px);
-                top: auto;
-                bottom: 20px;
-                right: 20px;
+                width: calc(100% - 40px); top: auto; bottom: 20px; right: 20px;
             }
         }
     </style>
@@ -163,71 +128,65 @@
 <body>
 
 <div class="filter-container">
-    <div class="filter-title">Filtra Equipaggi</div>
+    <div class="filter-title">Equipaggi</div>
     
     <div class="filter-group">
-        <label class="filter-label" for="country-filter">Paese</label>
+        <label class="filter-label">Paese</label>
         <select id="country-filter">
-            <option value="all">Tutti i paesi</option>
+            <option value="all">Tutti i Paesi</option>
         </select>
     </div>
     
-    <div class="filter-group" id="region-group" style="display: none;">
-        <label class="filter-label" for="region-filter">Regione (Italia)</label>
+    <div id="region-group" class="filter-group" style="display: none;">
+        <label class="filter-label">Regione (Italia)</label>
         <select id="region-filter">
-            <option value="all">Tutte le regioni</option>
+            <option value="all">Tutte le Regioni</option>
         </select>
     </div>
 </div>
 
 <div id="map"></div>
 
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<!-- MarkerCluster JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
 <script>
-    // Initialize the map
     const map = L.map('map', {
-        center: [41.9028, 12.4964],
+        center: [42, 12],
         zoom: 6,
         minZoom: 2,
-        maxBounds: [[-90, -180], [90, 180]]
+        maxBounds: [[-85, -180], [85, 180]]
     });
 
-    // Create a pane for the background to ensure markers stay on top
-    map.createPane('background');
-    map.getPane('background').style.zIndex = 100;
+    // Pane per i confini regionali (sopra la terra, sotto i pin)
+    map.createPane('borders');
+    map.getPane('borders').style.zIndex = 200;
 
-    // Background Tile Layer (Fallback if GeoJSON fails)
-    const baseTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
-        pane: 'background'
-    }).addTo(map);
-
-    // Load World GeoJSON
+    // Caricamento Confini Mondo
     fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
-        .then(response => response.json())
+        .then(res => res.json())
         .then(data => {
             L.geoJSON(data, {
-                pane: 'background',
-                style: function(feature) {
-                    return {
-                        fillColor: '#ffffff',
-                        fillOpacity: 1,
-                        color: 'var(--med-light-blue)',
-                        weight: 0.8,
-                        opacity: 1
-                    };
+                style: {
+                    fillColor: '#ffffff', fillOpacity: 1,
+                    color: '#388ecd', weight: 1, opacity: 1
                 }
             }).addTo(map);
-        })
-        .catch(err => {
-            console.error("GeoJSON load failed:", err);
-            // Fallback is already added as baseTiles
         });
 
-    // Data from CSV geocoded with Country and Region
+    // Caricamento Regioni Italiane per evidenziare i confini interni
+    fetch('https://raw.githubusercontent.com/openpolis/geojson-italy/master/geojson/limits_IT_regions.json')
+        .then(res => res.json())
+        .then(data => {
+            L.geoJSON(data, {
+                pane: 'borders',
+                style: {
+                    fillColor: 'transparent',
+                    color: '#388ecd', weight: 0.5, opacity: 0.5
+                }
+            }).addTo(map);
+        });
+
     const equipaggi = [
         { city: "Alcamo", country: "Italia", region: "Sicilia", lat: 37.9757, lng: 12.9647, mail: "mediterraneaalcamo@gmail.com", fb: "https://www.facebook.com/mediterraneaalcamo/", ig: "https://www.instagram.com/mediterraneapesaro/", x: "" },
         { city: "Alta Murgia", country: "Italia", region: "Puglia", lat: 40.8272, lng: 16.5516, mail: "mediterranea.altamurgia@gmail.com", fb: "", ig: "https://www.instagram.com/mediterraneaaltamurgia/", x: "" },
@@ -280,103 +239,83 @@
         { city: "Vicenza", country: "Italia", region: "Veneto", lat: 45.5479, lng: 11.5497, mail: "mediterranea.vi@gmail.com", fb: "https://www.facebook.com/mediterraneavicenza/", ig: "", x: "" }
     ];
 
-    // Custom Icon (Mediterranean Orange)
     const medIcon = L.divIcon({
         html: '<i class="fa-solid fa-location-dot" style="color: var(--med-orange); font-size: 24px;"></i>',
         className: 'custom-div-icon',
-        iconSize: [24, 24],
-        iconAnchor: [12, 24],
-        popupAnchor: [0, -24]
+        iconSize: [24, 24], iconAnchor: [12, 24], popupAnchor: [0, -24]
     });
 
-    const markersLayer = L.markerClusterGroup({
+    const markersCluster = L.markerClusterGroup({
         showCoverageOnHover: false,
         spiderfyOnMaxZoom: true,
         disableClusteringAtZoom: 8,
         maxClusterRadius: 40
     });
-    map.addLayer(markersLayer);
+    map.addLayer(markersCluster);
 
-    const countryFilter = document.getElementById('country-filter');
-    const regionFilter = document.getElementById('region-filter');
+    const countrySelect = document.getElementById('country-filter');
+    const regionSelect = document.getElementById('region-filter');
     const regionGroup = document.getElementById('region-group');
 
-    // Populate filters
-    const countries = [...new Set(equipaggi.map(item => item.country))].sort();
-    const regions = [...new Set(equipaggi.filter(item => item.country === "Italia").map(item => item.region))].sort();
-
-    countries.forEach(country => {
-        const option = document.createElement('option');
-        option.value = country;
-        option.textContent = country;
-        countryFilter.appendChild(option);
+    // Popola Filtri
+    const countries = [...new Set(equipaggi.map(e => e.country))].sort();
+    countries.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = c;
+        countrySelect.appendChild(opt);
     });
 
-    regions.forEach(region => {
-        const option = document.createElement('option');
-        option.value = region;
-        option.textContent = region;
-        regionFilter.appendChild(option);
+    const regions = [...new Set(equipaggi.filter(e => e.country === "Italia").map(e => e.region))].sort();
+    regions.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = r;
+        regionSelect.appendChild(opt);
     });
 
     function updateMap() {
-        const selectedCountry = countryFilter.value;
-        const selectedRegion = regionFilter.value;
+        const cVal = countrySelect.value;
+        const rVal = regionSelect.value;
 
-        // Show/Hide region filter
-        if (selectedCountry === "Italia") {
-            regionGroup.style.display = 'block';
-        } else {
-            regionGroup.style.display = 'none';
-            regionFilter.value = 'all';
-        }
+        regionGroup.style.display = (cVal === "Italia") ? "block" : "none";
+        if (cVal !== "Italia") regionSelect.value = "all";
 
-        markersLayer.clearLayers();
-        
-        const filtered = equipaggi.filter(item => {
-            const countryMatch = selectedCountry === 'all' || item.country === selectedCountry;
-            const regionMatch = selectedRegion === 'all' || item.region === selectedRegion;
-            return countryMatch && regionMatch;
+        markersCluster.clearLayers();
+
+        const filtered = equipaggi.filter(e => {
+            return (cVal === "all" || e.country === cVal) && (rVal === "all" || e.region === rVal);
         });
 
-        filtered.forEach((item, index) => {
-            let popupContent = `
-                <div class="popup-title">${item.city}</div>
-                <div class="social-buttons">
-                    ${item.mail ? `<a href="mailto:${item.mail}" class="social-btn btn-email" title="Email"><i class="fas fa-envelope"></i>Email</a>` : ''}
-                    ${item.fb ? `<a href="${item.fb}" target="_blank" class="social-btn btn-fb" title="Facebook"><i class="fab fa-facebook-f"></i>Facebook</a>` : ''}
-                    ${item.ig ? `<a href="${item.ig}" target="_blank" class="social-btn btn-ig" title="Instagram"><i class="fab fa-instagram"></i>Instagram</a>` : ''}
-                    ${item.x ? `<a href="${item.x}" target="_blank" class="social-btn btn-x" title="X"><i class="fab fa-x-twitter"></i>X</a>` : ''}
+        filtered.forEach((e, idx) => {
+            const popupHtml = `
+                <div class="popup-header">${e.city}</div>
+                <div class="popup-body">
+                    <div class="social-grid">
+                        ${e.mail ? `<a href="mailto:${e.mail}" class="social-btn"><i class="fas fa-envelope"></i>Email</a>` : ''}
+                        ${e.fb ? `<a href="${e.fb}" target="_blank" class="social-btn"><i class="fab fa-facebook-f"></i>FB</a>` : ''}
+                        ${e.ig ? `<a href="${e.ig}" target="_blank" class="social-btn"><i class="fab fa-instagram"></i>IG</a>` : ''}
+                        ${e.x ? `<a href="${e.x}" target="_blank" class="social-btn"><i class="fab fa-x-twitter"></i>X</a>` : ''}
+                    </div>
                 </div>
             `;
 
-            // Alternate label positions to reduce overlap
-            const directions = ['right', 'left', 'top', 'bottom'];
-            const dir = directions[index % 4];
-
-            const marker = L.marker([item.lat, item.lng], { icon: medIcon })
-                .bindPopup(popupContent)
-                .bindTooltip(item.city, { 
-                    permanent: true, 
-                    direction: dir,
-                    offset: dir === 'right' ? [12, -12] : dir === 'left' ? [-12, -12] : dir === 'top' ? [0, -25] : [0, 5],
-                    className: 'city-tooltip'
+            const dirs = ['right', 'left', 'top', 'bottom'];
+            const marker = L.marker([e.lat, e.lng], { icon: medIcon })
+                .bindPopup(popupHtml)
+                .bindTooltip(e.city, {
+                    permanent: true, direction: dirs[idx % 4],
+                    className: 'city-label', offset: [10, -10]
                 });
-            
-            markersLayer.addLayer(marker);
+            markersCluster.addLayer(marker);
         });
 
-        // Adjust view if filtered results exist
         if (filtered.length > 0) {
-            const group = L.featureGroup(filtered.map(item => L.marker([item.lat, item.lng])));
-            map.fitBounds(group.getBounds().pad(0.2));
+            const bounds = L.featureGroup(filtered.map(e => L.marker([e.lat, e.lng]))).getBounds();
+            map.fitBounds(bounds.pad(0.2));
         }
     }
 
-    countryFilter.addEventListener('change', updateMap);
-    regionFilter.addEventListener('change', updateMap);
-
-    // Initial load
+    countrySelect.addEventListener('change', updateMap);
+    regionSelect.addEventListener('change', updateMap);
     updateMap();
 </script>
 
