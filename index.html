@@ -6,14 +6,15 @@
     <title>Mediterranea Saving Humans - Mappa Equipaggi</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://unpkg.com/topojson-client@3"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --med-orange: #FF5B00;
             --med-blue: #00235D;
             --med-light-blue: #009EE0;
             --med-white: #FFFFFF;
-            --med-dark: #001a44;
+            --med-dark: #00122e;
+            --glass-bg: rgba(0, 35, 93, 0.7);
         }
 
         body, html {
@@ -22,8 +23,8 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--med-blue);
+            font-family: 'Montserrat', sans-serif;
+            background: radial-gradient(circle, #002c74 0%, #00122e 100%);
             color: var(--med-white);
         }
 
@@ -35,163 +36,206 @@
 
         #controls {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 25px;
+            left: 25px;
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 15px;
         }
 
         .filter-group {
             display: flex;
-            gap: 10px;
-            background: rgba(0, 35, 93, 0.8);
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--med-light-blue);
+            gap: 12px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 158, 224, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
 
         .zoom-controls {
             display: flex;
-            flex-direction: column;
-            gap: 5px;
-            width: 40px;
+            flex-direction: row;
+            gap: 8px;
         }
 
         .zoom-btn {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             background-color: var(--med-orange);
             color: var(--med-white);
             border: none;
-            border-radius: 4px;
-            font-size: 20px;
+            border-radius: 8px;
+            font-size: 18px;
             font-weight: bold;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: opacity 0.2s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 91, 0, 0.3);
         }
 
         .zoom-btn:hover {
-            opacity: 0.8;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 91, 0, 0.5);
         }
 
         select {
-            background-color: var(--med-white);
+            background-color: rgba(255, 255, 255, 0.9);
             color: var(--med-blue);
             border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
+            padding: 10px 15px;
+            border-radius: 6px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 700;
             outline: none;
+            font-size: 13px;
         }
 
         .country-path {
             fill: var(--med-dark);
             stroke: var(--med-light-blue);
-            stroke-width: 0.5;
+            stroke-width: 0.6;
+            filter: drop-shadow(0px 0px 2px rgba(0, 158, 224, 0.2));
+            transition: fill 0.3s;
+        }
+
+        .country-path:hover {
+            fill: #001a44;
+        }
+
+        .marker-group {
+            cursor: pointer;
+        }
+
+        .marker-pulse {
+            fill: var(--med-orange);
+            fill-opacity: 0.4;
+            pointer-events: none;
         }
 
         .marker {
             fill: var(--med-orange);
             stroke: var(--med-white);
-            stroke-width: 1;
-            cursor: pointer;
-            transition: r 0.2s ease-in-out, fill 0.2s;
+            stroke-width: 1.5;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .marker-group:hover .marker {
+            fill: var(--med-white);
+            stroke: var(--med-orange);
+            r: 7;
         }
 
         .tooltip {
             position: absolute;
-            background: rgba(0, 35, 93, 0.9);
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
             color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
             pointer-events: none;
             display: none;
             z-index: 3000;
-            border: 1px solid var(--med-light-blue);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
             white-space: nowrap;
         }
 
         .tooltip i {
-            margin-left: 5px;
-            font-size: 10px;
+            margin-left: 6px;
+            font-size: 11px;
             color: var(--med-orange);
         }
 
         .popup {
             position: absolute;
-            background: var(--med-white);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             color: var(--med-blue);
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
             pointer-events: all;
-            min-width: 180px;
+            min-width: 220px;
             display: none;
             z-index: 2000;
+            border: 1px solid var(--med-white);
         }
 
         .popup h3 {
-            margin: 0 0 10px 0;
-            font-size: 1.2em;
+            margin: 0 0 15px 0;
+            font-size: 1.4em;
+            font-weight: 700;
             color: var(--med-blue);
-            border-bottom: 2px solid var(--med-orange);
-            padding-bottom: 5px;
+            border-bottom: 3px solid var(--med-orange);
+            padding-bottom: 8px;
         }
 
         .social-buttons {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
 
         .social-btn {
             display: flex;
             align-items: center;
-            padding: 8px 12px;
-            border-radius: 4px;
+            padding: 10px 16px;
+            border-radius: 8px;
             background-color: var(--med-orange);
             color: var(--med-white);
             text-decoration: none;
-            font-size: 14px;
-            font-weight: bold;
-            transition: opacity 0.2s;
-            gap: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            gap: 12px;
+            box-shadow: 0 4px 10px rgba(255, 91, 0, 0.2);
         }
 
         .social-btn i {
-            width: 20px;
+            width: 18px;
             text-align: center;
             font-size: 16px;
         }
 
         .social-btn:hover {
-            opacity: 0.8;
+            transform: translateX(5px);
+            background-color: var(--med-blue);
+            box-shadow: 0 4px 15px rgba(0, 35, 93, 0.3);
         }
 
         .close-popup {
             position: absolute;
-            top: 5px;
-            right: 10px;
+            top: 10px;
+            right: 15px;
             cursor: pointer;
-            font-size: 24px;
+            font-size: 26px;
             color: var(--med-blue);
             line-height: 1;
+            transition: color 0.3s;
+        }
+
+        .close-popup:hover {
+            color: var(--med-orange);
         }
 
         #zoom-hint {
             position: absolute;
-            bottom: 20px;
-            right: 20px;
-            font-size: 0.8em;
-            opacity: 0.7;
+            bottom: 25px;
+            right: 25px;
+            font-size: 0.75em;
+            font-weight: 700;
+            color: var(--med-white);
+            opacity: 0.6;
+            background: var(--glass-bg);
+            padding: 6px 12px;
+            border-radius: 20px;
             pointer-events: none;
         }
     </style>
@@ -208,8 +252,8 @@
             </select>
         </div>
         <div class="zoom-controls">
-            <button class="zoom-btn" id="zoom-in" title="Aumenta zoom">+</button>
-            <button class="zoom-btn" id="zoom-out" title="Diminuisci zoom">-</button>
+            <button class="zoom-btn" id="zoom-in" title="Aumenta zoom"><i class="fas fa-plus"></i></button>
+            <button class="zoom-btn" id="zoom-out" title="Diminuisci zoom"><i class="fas fa-minus"></i></button>
         </div>
     </div>
 
@@ -258,11 +302,11 @@
                 // Maintain marker size
                 g.selectAll(".marker")
                     .attr("r", 5 / event.transform.k)
-                    .attr("stroke-width", 1 / event.transform.k);
+                    .attr("stroke-width", 1.5 / event.transform.k);
+                g.selectAll(".marker-pulse")
+                    .attr("stroke-width", 0); // No stroke on pulse
                 g.selectAll(".country-path")
-                    .attr("stroke-width", 0.5 / event.transform.k);
-                g.selectAll(".region-path")
-                    .attr("stroke-width", 0.3 / event.transform.k);
+                    .attr("stroke-width", 0.6 / event.transform.k);
             });
 
         svg.call(zoom);
@@ -849,17 +893,38 @@
             }
 
             // Markers
-            const markers = g.selectAll(".marker")
+            const markerGroups = g.selectAll(".marker-group")
                 .data(locations)
-                .enter().append("circle")
-                .attr("class", "marker")
-                .attr("cx", d => projection([d.lon, d.lat])[0])
-                .attr("cy", d => projection([d.lon, d.lat])[1])
-                .attr("r", 5)
+                .enter().append("g")
+                .attr("class", "marker-group")
+                .attr("transform", d => `translate(${projection([d.lon, d.lat])})`)
                 .on("mouseover", (event, d) => showTooltip(event, d))
                 .on("mousemove", (event) => moveTooltip(event))
-                .on("mouseout", () => hideTooltip())
+                .on("mouseout", (event) => hideTooltip(event))
                 .on("click", (event, d) => showPopup(event, d));
+
+            markerGroups.append("circle")
+                .attr("class", "marker-pulse")
+                .attr("r", 10)
+                .each(function() {
+                    pulse(d3.select(this));
+                });
+
+            markerGroups.append("circle")
+                .attr("class", "marker")
+                .attr("r", 5);
+
+            function pulse(circle) {
+                circle.transition()
+                    .duration(2000)
+                    .attr("r", 20)
+                    .style("fill-opacity", 0)
+                    .transition()
+                    .duration(0)
+                    .attr("r", 5)
+                    .style("fill-opacity", 0.4)
+                    .on("end", function() { pulse(d3.select(this)); });
+            }
 
             // Tooltip Logic
             const tooltip = d3.select("#tooltip");
@@ -867,18 +932,14 @@
             function showTooltip(event, d) {
                 let icons = "";
                 if (d.mail) icons += '<i class="fas fa-envelope"></i>';
-                if (d.fb) icons += '<i class="fab fa-facebook-f"></i>';
-                if (d.ig) icons += '<i class="fab fa-instagram"></i>';
+                if (d.fb) icons += '<i class="fa-brands fa-facebook-f"></i>';
+                if (d.ig) icons += '<i class="fa-brands fa-instagram"></i>';
                 if (d.x) icons += '<i class="fa-brands fa-x-twitter"></i>';
                 
                 tooltip.style("display", "block")
-                    .html(`<strong>${d.name}</strong> ${icons}`);
+                    .html(`<span>${d.name}</span> ${icons}`);
                 
-                d3.select(event.currentTarget)
-                    .transition()
-                    .duration(200)
-                    .attr("r", 8 / d3.zoomTransform(svg.node()).k)
-                    .style("fill", config.colors.lightBlue);
+                event.stopPropagation();
             }
 
             function moveTooltip(event) {
@@ -889,10 +950,6 @@
 
             function hideTooltip() {
                 tooltip.style("display", "none");
-                markers.transition()
-                    .duration(200)
-                    .attr("r", 5 / d3.zoomTransform(svg.node()).k)
-                    .style("fill", config.colors.orange);
             }
 
             // Populate Filters
@@ -910,7 +967,7 @@
                 const selectedCountry = countrySelect.property("value");
                 const selectedRegion = regionSelect.property("value");
 
-                markers.style("display", d => {
+                markerGroups.style("display", d => {
                     const countryMatch = selectedCountry === "all" || d.country === selectedCountry;
                     const regionMatch = selectedRegion === "all" || d.region === selectedRegion;
                     return (countryMatch && regionMatch) ? "block" : "none";
