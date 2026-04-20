@@ -5,69 +5,90 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mappa Equipaggi Mediterranea</title>
     
+    <!-- Librerie Base -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+    
+    <!-- Font e Icone -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
-        :root { --med-orange: #e94e1b; --med-blue: #18407e; --med-white: #ffffff; }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Montserrat', sans-serif; background-color: #18407e; }
-        #map { height: 100vh; width: 100%; background-color: #18407e; }
+        :root { --med-orange: #e94e1b; --med-blue: #18407e; --med-light-blue: #388ecd; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Montserrat', sans-serif; background-color: var(--med-blue); overflow: hidden; }
+        #map { height: 100vh; width: 100%; background-color: var(--med-blue); }
 
+        /* Pannello Filtri Professional */
         .filter-container {
             position: absolute; top: 20px; right: 20px; z-index: 5000;
-            background: white; padding: 15px; border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5); width: 220px;
-            border-top: 5px solid #e94e1b;
+            background: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 12px;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.4); width: 250px;
+            border-top: 5px solid var(--med-orange);
         }
-        select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin-bottom: 8px; font-family: inherit; }
+        .filter-title { color: var(--med-blue); font-weight: 700; margin-bottom: 15px; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; }
+        .filter-label { display: block; font-size: 0.7rem; font-weight: 700; margin-bottom: 5px; color: #555; text-transform: uppercase; }
+        select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; outline: none; font-family: inherit; margin-bottom: 12px; color: var(--med-blue); }
 
+        /* Etichette città pulite */
         .city-label {
             background: transparent !important; border: none !important; box-shadow: none !important;
-            color: #18407e; font-weight: 800; font-size: 0.8rem;
-            text-shadow: 2px 0 #fff, -2px 0 #fff, 0 2px #fff, 0 -2px #fff, 1px 1px #fff, -1px -1px #fff, 1px -1px #fff, -1px 1px #fff;
+            color: var(--med-blue); font-weight: 800; font-size: 0.75rem;
+            text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
             white-space: nowrap;
         }
 
-        .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; }
-        .popup-header { background: #18407e; color: white; padding: 10px; text-align: center; font-weight: 700; border-radius: 12px 12px 0 0; }
-        .social-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; }
+        /* Popup Professionale e Spaziato */
+        .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .leaflet-popup-content { margin: 0 !important; width: 240px !important; }
+        .popup-header { background: var(--med-blue); color: white; padding: 15px; text-align: center; font-weight: 700; font-size: 1.1rem; }
+        .popup-body { padding: 15px; }
+        .social-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .social-btn {
-            display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center; padding: 10px; border-radius: 6px;
             text-decoration: none; color: white !important; font-size: 0.75rem; font-weight: 700;
-            background-color: #18407e;
+            background-color: var(--med-blue); transition: background 0.2s;
         }
+        .social-btn:hover { background-color: var(--med-orange); }
+        .social-btn i { margin-right: 6px; font-size: 0.9rem; }
+
+        /* Cluster color Mediterranea */
+        .marker-cluster div { background-color: var(--med-orange); color: white; font-weight: 700; }
+        .marker-cluster { background-color: rgba(233, 78, 27, 0.4); }
+
+        @media (max-width: 600px) { .filter-container { width: calc(100% - 40px); top: auto; bottom: 20px; right: 20px; } }
     </style>
 </head>
 <body>
 
 <div class="filter-container">
-    <div style="color:#18407e; font-weight:700; margin-bottom:10px; font-size:0.8rem;">FILTRA EQUIPAGGI</div>
-    <select id="country-filter"><option value="all">Tutti i Paesi</option></select>
-    <select id="region-filter" style="display:none;"><option value="all">Tutte le Regioni</option></select>
+    <div class="filter-title">Equipaggi di Terra</div>
+    <div class="filter-group">
+        <label class="filter-label">Paese</label>
+        <select id="country-filter"><option value="all">Tutti i Paesi</option></select>
+    </div>
+    <div id="region-group" class="filter-group" style="display:none;">
+        <label class="filter-label">Regione (Italia)</label>
+        <select id="region-filter"><option value="all">Tutte le Regioni</option></select>
+    </div>
 </div>
 
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
 <script>
-    const map = L.map('map', { center: [42, 12.5], zoom: 6 });
+    const map = L.map('map', { center: [42, 12.5], zoom: 6, minZoom: 2 });
 
-    // Creazione Panes per forzare i livelli
-    map.createPane('land');
-    map.getPane('land').style.zIndex = 200;
-    map.createPane('topMarkers');
-    map.getPane('topMarkers').style.zIndex = 1000; // Livello altissimo
+    // Piani per la visibilità
+    map.createPane('land'); map.getPane('land').style.zIndex = 200;
+    map.createPane('topLayer'); map.getPane('topMarkers').style.zIndex = 1000; // Riutilizzo o ricreo
 
-    // Sfondo Terre Emerse (Sempre visibile)
+    // 1. Terre Emerse (Bianche)
     fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
         .then(r => r.json()).then(data => {
-            L.geoJSON(data, {
-                pane: 'land',
-                interactive: false,
-                style: { fillColor: '#ffffff', fillOpacity: 1, color: '#388ecd', weight: 1 }
-            }).addTo(map);
+            L.geoJSON(data, { pane: 'land', interactive: false, style: { fillColor: '#ffffff', fillOpacity: 1, color: '#388ecd', weight: 1 } }).addTo(map);
         });
 
     const dati = [
@@ -95,7 +116,7 @@
         { city: "Messina", country: "Italia", region: "Sicilia", lat: 38.1938, lng: 15.5540, mail: "mediterranea.messina@gmail.com", fb: "", ig: "https://www.instagram.com/mediterranea_messina/", x: "" },
         { city: "Milano", country: "Italia", region: "Lombardia", lat: 45.4642, lng: 9.1900, mail: "mediterranea.milano.edt@gmail.com", fb: "https://www.facebook.com/mediterraneamilano/", ig: "https://www.instagram.com/mediterranea_milano/", x: "" },
         { city: "Modena", country: "Italia", region: "Emilia-Romagna", lat: 44.6471, lng: 10.9252, mail: "mediterranea.modena@gmail.com", fb: "https://www.facebook.com/mediterraneamodena/", ig: "https://instagram.com/mediterranea_modena", x: "" },
-        { city: "Monaco", country: "Germania", region: "", lat: 48.1351, lng: 11.5820, mail: "mediterranea.munich@gmail.com", fb: "", ig: "https://www.instagram.com/mediterranea_munich/", x: "" },
+        { city: "Monaco di Baviera", country: "Germania", region: "", lat: 48.1351, lng: 11.5820, mail: "mediterranea.munich@gmail.com", fb: "", ig: "https://www.instagram.com/mediterranea_munich/", x: "" },
         { city: "Napoli", country: "Italia", region: "Campania", lat: 40.8518, lng: 14.2681, mail: "napoli@mediterranearescue.org", fb: "https://www.facebook.com/MediterraneaNapoli/", ig: "https://instagram.com/mediterraneanapoli", x: "https://twitter.com/RescueMedNa" },
         { city: "Paesi Bassi", country: "Paesi Bassi", region: "", lat: 52.3676, lng: 4.9041, mail: "mediterraneanetherlands@gmail.com", fb: "https://www.facebook.com/profile.php?id=61558117682417", ig: "https://www.instagram.com/mediterranea_rescue_nl/", x: "" },
         { city: "Padova", country: "Italia", region: "Veneto", lat: 45.4064, lng: 11.8768, mail: "mediterranea.padova.edt@gmail.com", fb: "https://www.facebook.com/mediterraneapadova/", ig: "https://www.instagram.com/mediterranea_padova/", x: "" },
@@ -122,42 +143,44 @@
         { city: "Vicenza", country: "Italia", region: "Veneto", lat: 45.5479, lng: 11.5497, mail: "mediterranea.vi@gmail.com", fb: "https://www.facebook.com/mediterraneavicenza/", ig: "", x: "" }
     ];
 
-    const markersLayer = L.layerGroup().addTo(map);
+    // Riattivo il Clustering nel piano superiore
+    const cluster = L.markerClusterGroup({ 
+        showCoverageOnHover: false, 
+        maxClusterRadius: 40
+    });
+    map.addLayer(cluster);
 
     function updateMap() {
         const cVal = document.getElementById('country-filter').value;
         const rVal = document.getElementById('region-filter').value;
-        document.getElementById('region-filter').style.display = (cVal === "Italia") ? "block" : "none";
+        document.getElementById('region-group').style.display = (cVal === "Italia") ? "block" : "none";
         
-        markersLayer.clearLayers();
+        cluster.clearLayers();
         const filtrati = dati.filter(e => (cVal === "all" || e.country === cVal) && (rVal === "all" || e.region === rVal));
 
         filtrati.forEach((e, idx) => {
-            // Cerchio Vettoriale Garantito (Non può essere bloccato)
+            const popupHtml = `
+                <div class="popup-header">${e.city}</div>
+                <div class="popup-body">
+                    <div class="social-grid">
+                        ${e.mail ? `<a href="mailto:${e.mail}" class="social-btn"><i class="fas fa-envelope"></i>Email</a>` : ''}
+                        ${e.fb ? `<a href="${e.fb}" target="_blank" class="social-btn"><i class="fab fa-facebook-f"></i>FB</a>` : ''}
+                        ${e.ig ? `<a href="${e.ig}" target="_blank" class="social-btn"><i class="fab fa-instagram"></i>IG</a>` : ''}
+                        ${e.x ? `<a href="${e.x}" target="_blank" class="social-btn"><i class="fab fa-x-twitter"></i>X</a>` : ''}
+                    </div>
+                </div>`;
+
             const m = L.circleMarker([e.lat, e.lng], {
-                pane: 'topMarkers',
-                radius: 10,
-                fillColor: "#e94e1b",
-                color: "#ffffff",
-                weight: 4,
-                fillOpacity: 1
-            }).bindPopup(`<div class="popup-header">${e.city}</div><div class="social-grid">` +
-                (e.mail ? `<a href="mailto:${e.mail}" class="social-btn"><i class="fas fa-envelope"></i>Email</a>` : '') +
-                (e.fb ? `<a href="${e.fb}" target="_blank" class="social-btn"><i class="fab fa-facebook-f"></i>FB</a>` : '') +
-                (e.ig ? `<a href="${e.ig}" target="_blank" class="social-btn"><i class="fab fa-instagram"></i>IG</a>` : '') +
-                (e.x ? `<a href="${e.x}" target="_blank" class="social-btn"><i class="fab fa-x-twitter"></i>X</a>` : '') +
-                `</div>`);
+                radius: 10, fillColor: "#e94e1b", color: "#ffffff", weight: 3, fillOpacity: 1
+            }).bindPopup(popupHtml);
 
-            m.bindTooltip(e.city, { permanent: true, direction: ['right','left','top','bottom'][idx%4], className: 'city-label', offset: [15,-15], pane: 'topMarkers' });
-            markersLayer.addLayer(m);
+            m.bindTooltip(e.city, { permanent: true, direction: ['top','bottom','left','right'][idx%4], className: 'city-label', offset: [0,0] });
+            cluster.addLayer(m);
         });
-
-        if (filtrati.length > 0) {
-            const bounds = L.featureGroup(filtrati.map(e => L.circleMarker([e.lat, e.lng]))).getBounds();
-            map.fitBounds(bounds.pad(0.2));
-        }
+        if (filtrati.length > 0) map.fitBounds(L.featureGroup(filtrati.map(e => L.marker([e.lat, e.lng]))).getBounds().pad(0.2));
     }
 
+    // Inizializza Filtri
     const countries = [...new Set(dati.map(e => e.country))].sort();
     countries.forEach(c => { const o = document.createElement('option'); o.value = o.textContent = c; document.getElementById('country-filter').appendChild(o); });
     const regions = [...new Set(dati.filter(e => e.country === "Italia").map(e => e.region))].sort();
