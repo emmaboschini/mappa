@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     
-    <!-- Font & Icons -->
+    <!-- Icons & Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     
@@ -22,126 +22,62 @@
             --med-white: #ffffff;
         }
 
-        body, html {
-            margin: 0; padding: 0; height: 100%;
-            font-family: 'Montserrat', sans-serif;
-            background-color: var(--med-blue);
-            overflow: hidden;
-        }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Montserrat', sans-serif; background-color: var(--med-blue); overflow: hidden; }
+        #map { height: 100vh; width: 100%; background-color: var(--med-blue); }
 
-        #map {
-            height: 100vh; width: 100%;
-            background-color: var(--med-blue);
-        }
-
-        /* Pannello Filtri */
+        /* Filtri */
         .filter-container {
-            position: absolute; top: 20px; right: 20px;
-            z-index: 1000; background: rgba(255, 255, 255, 0.95);
-            padding: 20px; border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            width: 260px; border-top: 4px solid var(--med-orange);
+            position: absolute; top: 20px; right: 20px; z-index: 1000;
+            background: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3); width: 260px; border-top: 4px solid var(--med-orange);
         }
-
-        .filter-title {
-            color: var(--med-blue); font-weight: 700;
-            margin-bottom: 15px; font-size: 1.1rem;
-            text-transform: uppercase; letter-spacing: 1px;
-        }
-
+        .filter-title { color: var(--med-blue); font-weight: 700; margin-bottom: 15px; font-size: 1.1rem; text-transform: uppercase; }
         .filter-group { margin-bottom: 15px; }
-        
-        .filter-label {
-            display: block; font-size: 0.8rem;
-            font-weight: 700; margin-bottom: 6px;
-            color: var(--med-blue); opacity: 0.8;
-        }
+        .filter-label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: var(--med-blue); opacity: 0.8; }
+        select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; font-family: inherit; font-size: 0.9rem; color: var(--med-blue); outline: none; }
 
-        select {
-            width: 100%; padding: 10px;
-            border-radius: 6px; border: 1px solid #ddd;
-            font-family: inherit; font-size: 0.9rem;
-            color: var(--med-blue); outline: none;
-            cursor: pointer; transition: border 0.2s;
-        }
-
-        select:focus { border-color: var(--med-orange); }
-
-        /* Popup Professionali */
-        .leaflet-popup-content-wrapper {
-            border-radius: 12px; padding: 0; overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-
+        /* Popup */
+        .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; overflow: hidden; }
         .leaflet-popup-content { margin: 0 !important; width: 220px !important; }
-
-        .popup-header {
-            background: var(--med-blue); color: white;
-            padding: 15px; text-align: center;
-            font-weight: 700; font-size: 1.1rem;
-        }
-
+        .popup-header { background: var(--med-blue); color: white; padding: 15px; text-align: center; font-weight: 700; }
         .popup-body { padding: 15px; }
-
-        .social-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
-        }
-
+        .social-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .social-btn {
-            display: flex; align-items: center; justify-content: center;
-            padding: 10px; border-radius: 6px;
-            text-decoration: none; color: white !important;
-            font-size: 0.8rem; font-weight: 700;
-            background-color: var(--med-blue);
-            transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; padding: 10px; border-radius: 6px;
+            text-decoration: none; color: white !important; font-size: 0.8rem; font-weight: 700;
+            background-color: var(--med-blue); transition: all 0.2s;
         }
+        .social-btn:hover { background-color: var(--med-orange); transform: translateY(-2px); }
+        .social-btn i { margin-right: 5px; }
 
-        .social-btn:hover {
-            background-color: var(--med-orange);
-            transform: translateY(-2px);
-        }
-
-        .social-btn i { font-size: 1rem; margin-right: 5px; }
-
-        /* Etichette città */
+        /* Labels */
         .city-label {
-            background: transparent !important; border: none !important;
-            box-shadow: none !important; color: var(--med-blue);
-            font-weight: 700; font-size: 0.75rem;
+            background: transparent !important; border: none !important; box-shadow: none !important;
+            color: var(--med-blue); font-weight: 700; font-size: 0.75rem;
             text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
+            white-space: nowrap;
         }
 
-        /* Cluster Style */
-        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large { background: none; }
-        .marker-cluster div {
-            background-color: var(--med-orange); color: white;
-            font-family: 'Montserrat', sans-serif; font-weight: 700;
+        /* Cluster */
+        .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+            background-color: var(--med-orange); color: white; font-weight: 700;
         }
+        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large { background-color: rgba(233, 78, 27, 0.4); }
 
-        @media (max-width: 600px) {
-            .filter-container {
-                width: calc(100% - 40px); top: auto; bottom: 20px; right: 20px;
-            }
-        }
+        @media (max-width: 600px) { .filter-container { width: calc(100% - 40px); top: auto; bottom: 20px; right: 20px; } }
     </style>
 </head>
 <body>
 
 <div class="filter-container">
     <div class="filter-title">Equipaggi</div>
-    
     <div class="filter-group">
         <label class="filter-label">Paese</label>
-        <select id="country-filter">
-            <option value="all">Tutti i Paesi</option>
-        </select>
+        <select id="country-filter"><option value="all">Tutti i Paesi</option></select>
     </div>
-    
     <div id="region-group" class="filter-group" style="display: none;">
         <label class="filter-label">Regione (Italia)</label>
-        <select id="region-filter">
-            <option value="all">Tutte le Regioni</option>
-        </select>
+        <select id="region-filter"><option value="all">Tutte le Regioni</option></select>
     </div>
 </div>
 
@@ -154,36 +90,34 @@
     const map = L.map('map', {
         center: [42, 12],
         zoom: 6,
-        minZoom: 2,
-        maxBounds: [[-85, -180], [85, 180]]
+        minZoom: 2
     });
 
-    // Pane per i confini regionali (sopra la terra, sotto i pin)
-    map.createPane('borders');
-    map.getPane('borders').style.zIndex = 200;
+    // Creazione Panes per gestire la visibilità (z-index)
+    map.createPane('landPane');
+    map.getPane('landPane').style.zIndex = 200;
+    map.createPane('borderPane');
+    map.getPane('borderPane').style.zIndex = 300;
+    map.createPane('markerPane');
+    map.getPane('markerPane').style.zIndex = 600;
 
-    // Caricamento Confini Mondo
+    // Sfondo Terra
     fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
         .then(res => res.json())
         .then(data => {
             L.geoJSON(data, {
-                style: {
-                    fillColor: '#ffffff', fillOpacity: 1,
-                    color: '#388ecd', weight: 1, opacity: 1
-                }
+                pane: 'landPane',
+                style: { fillColor: '#ffffff', fillOpacity: 1, color: '#388ecd', weight: 1.5, opacity: 1 }
             }).addTo(map);
         });
 
-    // Caricamento Regioni Italiane per evidenziare i confini interni
+    // Confini Regioni Italiane
     fetch('https://raw.githubusercontent.com/openpolis/geojson-italy/master/geojson/limits_IT_regions.json')
         .then(res => res.json())
         .then(data => {
             L.geoJSON(data, {
-                pane: 'borders',
-                style: {
-                    fillColor: 'transparent',
-                    color: '#388ecd', weight: 0.5, opacity: 0.5
-                }
+                pane: 'borderPane',
+                style: { fillColor: 'transparent', color: '#388ecd', weight: 0.8, opacity: 0.4 }
             }).addTo(map);
         });
 
@@ -239,17 +173,12 @@
         { city: "Vicenza", country: "Italia", region: "Veneto", lat: 45.5479, lng: 11.5497, mail: "mediterranea.vi@gmail.com", fb: "https://www.facebook.com/mediterraneavicenza/", ig: "", x: "" }
     ];
 
-    const medIcon = L.divIcon({
-        html: '<i class="fa-solid fa-location-dot" style="color: var(--med-orange); font-size: 24px;"></i>',
-        className: 'custom-div-icon',
-        iconSize: [24, 24], iconAnchor: [12, 24], popupAnchor: [0, -24]
-    });
-
     const markersCluster = L.markerClusterGroup({
         showCoverageOnHover: false,
         spiderfyOnMaxZoom: true,
         disableClusteringAtZoom: 8,
-        maxClusterRadius: 40
+        maxClusterRadius: 40,
+        clusterPane: 'markerPane'
     });
     map.addLayer(markersCluster);
 
@@ -275,7 +204,6 @@
     function updateMap() {
         const cVal = countrySelect.value;
         const rVal = regionSelect.value;
-
         regionGroup.style.display = (cVal === "Italia") ? "block" : "none";
         if (cVal !== "Italia") regionSelect.value = "all";
 
@@ -298,13 +226,23 @@
                 </div>
             `;
 
+            // Marker Circolare solido per massima visibilità
+            const marker = L.circleMarker([e.lat, e.lng], {
+                pane: 'markerPane',
+                radius: 8,
+                fillColor: "var(--med-orange)",
+                color: "#fff",
+                weight: 2,
+                fillOpacity: 1
+            }).bindPopup(popupHtml);
+
+            // Tooltip sfalsati
             const dirs = ['right', 'left', 'top', 'bottom'];
-            const marker = L.marker([e.lat, e.lng], { icon: medIcon })
-                .bindPopup(popupHtml)
-                .bindTooltip(e.city, {
-                    permanent: true, direction: dirs[idx % 4],
-                    className: 'city-label', offset: [10, -10]
-                });
+            marker.bindTooltip(e.city, {
+                permanent: true, direction: dirs[idx % 4],
+                className: 'city-label', offset: [10, -10]
+            });
+            
             markersCluster.addLayer(marker);
         });
 
