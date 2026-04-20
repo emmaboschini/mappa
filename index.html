@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mappa Equipaggi Mediterranea</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <!-- Font Awesome for Social Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --med-orange: #e94e1b;
+            --med-blue: #18407e;
+            --med-light-blue: #388ecd;
+            --med-white: #ffffff;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Montserrat', sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        /* Popup Styling */
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+            padding: 5px;
+            box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+        }
+        .leaflet-popup-content {
+            margin: 15px;
+            min-width: 200px;
+        }
+        .popup-title {
+            color: var(--med-blue);
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--med-orange);
+            padding-bottom: 5px;
+            text-align: center;
+        }
+        .social-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            border-radius: 4px;
+            text-decoration: none;
+            color: white;
+            font-size: 0.9rem;
+            transition: transform 0.2s, opacity 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+        .social-btn:hover {
+            transform: scale(1.05);
+            opacity: 0.9;
+            color: white;
+        }
+        .btn-email { background-color: var(--med-orange); }
+        .btn-fb { background-color: #1877F2; } /* Facebook Brand Color */
+        .btn-ig { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%); } /* Instagram Brand Gradient */
+        .btn-x { background-color: #000000; } /* X Brand Color */
+        
+        .social-btn i {
+            margin-right: 8px;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script>
+    // Initialize the map
+    const map = L.map('map').setView([41.9028, 12.4964], 6); // Centered on Italy
+
+    // Add Tile Layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Data from CSV geocoded
+    const equipaggi = [
+        { city: "Alcamo", lat: 37.9757, lng: 12.9647, mail: "mediterraneaalcamo@gmail.com", fb: "https://www.facebook.com/mediterraneaalcamo/", ig: "https://www.instagram.com/mediterraneapesaro/", x: "" },
+        { city: "Alta Murgia", lat: 40.8272, lng: 16.5516, mail: "mediterranea.altamurgia@gmail.com", fb: "", ig: "https://www.instagram.com/mediterraneaaltamurgia/", x: "" },
+        { city: "Barcelona", lat: 41.3851, lng: 2.1734, mail: "bcn@mediterranearescue.org", fb: "https://www.facebook.com/mediterraneabcn/", ig: "https://instagram.com/mediterraneabcn", x: "" },
+        { city: "Bari", lat: 41.1171, lng: 16.8719, mail: "mediterranea.ba@gmail.com", fb: "", ig: "", x: "" },
+        { city: "Belluno", lat: 46.1425, lng: 12.2167, mail: "mediterraneabelluno@gmail.com", fb: "", ig: "https://www.instagram.com/mediterranea_belluno/", x: "" },
+        { city: "Bergamo", lat: 45.6983, lng: 9.6773, mail: "mediterraneabergamo@gmail.com", fb: "https://www.facebook.com/Mediterranea-Bergamo-101641805420219/", ig: "https://www.instagram.com/mediterraneabg/", x: "" },
+        { city: "Berlin", lat: 52.5200, lng: 13.4050, mail: "berlinersformediterranea@gmail.com", fb: "https://www.facebook.com/mediterraneaberlinev", ig: "https://instagram.com/berliners4mediterranea", x: "https://twitter.com/berlinersfor" },
+        { city: "Bologna", lat: 44.4949, lng: 11.3426, mail: "mediterraneabologna@gmail.com", fb: "https://www.facebook.com/Mediterranea-Bologna-108241648276513/", ig: "https://instagram.com/mediterranea_bologna", x: "" },
+        { city: "Bolzano", lat: 46.4983, lng: 11.3548, mail: "mediterraneabolzano@gmail.com", fb: "https://www.facebook.com/profile.php?id=61553880287176", ig: "https://www.instagram.com/mediterranea_bz/", x: "" },
+        { city: "Brescia", lat: 45.5416, lng: 10.2118, mail: "bresciapermediterranea@gmail.com", fb: "https://www.facebook.com/Bresciapermediterranea/", ig: "https://instagram.com/bresciapermediterranea", x: "https://twitter.com/med_brescia1" },
+        { city: "Bruxelles", lat: 50.8503, lng: 4.3517, mail: "mediterraneabxl@gmail.com", fb: "https://www.facebook.com/mediterraneabxl", ig: "https://www.instagram.com/mediterraneabxl/", x: "" },
+        { city: "Carpi", lat: 44.7833, lng: 10.8833, mail: "carpimediterranea@gmail.com", fb: "https://www.facebook.com/mediterraneacarpi/", ig: "https://instagram.com/mediterraneacarpi", x: "" },
+        { city: "Chioggia", lat: 45.2167, lng: 12.2833, mail: "mediterranea.chioggia@gmail.com", fb: "https://www.facebook.com/RescueMedChioggia", ig: "https://www.instagram.com/mediterranea_chioggia/", x: "" },
+        { city: "Empolese Valdelsa", lat: 43.7176, lng: 10.9416, mail: "mediterraneaempolesevaldelsa@gmail.com", fb: "https://www.facebook.com/mediterraneaempolesevaldelsa/", ig: "https://instagram.com/mediterraneaempolese", x: "" },
+        { city: "Ferrara", lat: 44.8333, lng: 11.6167, mail: "mediterranea.fe@gmail.com", fb: "https://www.facebook.com/profile.php?id=100083339257177", ig: "https://www.instagram.com/mediterraneaferrara/", x: "" },
+        { city: "Firenze", lat: 43.7696, lng: 11.2558, mail: "firenzemediterranea@gmail.com", fb: "https://www.facebook.com/MediterraneaFirenzeEdT/", ig: "https://instagram.com/mediterraneafirenze", x: "" },
+        { city: "Forlì Cesena", lat: 44.2227, lng: 12.0407, mail: "mediterraneasavinghumansfc@gmail.com", fb: "https://www.facebook.com/mediterranearescuefc/", ig: "https://instagram.com/mediterranea_forlicesena", x: "" },
+        { city: "Formigine", lat: 44.5739, lng: 10.8464, mail: "mediterranea.formigine@gmail.com", fb: "https://www.facebook.com/mediterraneaformigine/", ig: "https://instagram.com/mediterranea_formigine", x: "" },
+        { city: "Genova/Liguria", lat: 44.4056, lng: 8.9463, mail: "mediterranea.liguria.edt@gmail.com", fb: "https://www.facebook.com/mediterraneagenova/", ig: "https://www.instagram.com/mediterranea_liguria/", x: "" },
+        { city: "Lecce", lat: 40.3515, lng: 18.1750, mail: "mediterranea.lecce@gmail.com", fb: "https://www.facebook.com/profile.php?id=100093579217432", ig: "https://www.instagram.com/mediterranealecce/", x: "" },
+        { city: "Marigliano", lat: 40.9247, lng: 14.4844, mail: "mediterraneamarigliano@gmail.com", fb: "https://www.facebook.com/profile.php?id=61573428013515", ig: "https://www.instagram.com/mediterranea.marigliano/", x: "" },
+        { city: "Messina", lat: 38.1938, lng: 15.5540, mail: "mediterranea.messina@gmail.com", fb: "", ig: "https://www.instagram.com/mediterranea_messina/", x: "" },
+        { city: "Milano", lat: 45.4642, lng: 9.1900, mail: "mediterranea.milano.edt@gmail.com", fb: "https://www.facebook.com/mediterraneamilano/", ig: "https://www.instagram.com/mediterranea_milano/", x: "" },
+        { city: "Modena", lat: 44.6471, lng: 10.9252, mail: "mediterranea.modena@gmail.com", fb: "https://www.facebook.com/mediterraneamodena/", ig: "https://instagram.com/mediterranea_modena", x: "" },
+        { city: "Monaco", lat: 48.1351, lng: 11.5820, mail: "mediterranea.munich@gmail.com", fb: "", ig: "https://www.instagram.com/mediterranea_munich/", x: "" },
+        { city: "Napoli", lat: 40.8518, lng: 14.2681, mail: "napoli@mediterranearescue.org", fb: "https://www.facebook.com/MediterraneaNapoli/", ig: "https://instagram.com/mediterraneanapoli", x: "https://twitter.com/RescueMedNa" },
+        { city: "Netherlands", lat: 52.3676, lng: 4.9041, mail: "mediterraneanetherlands@gmail.com", fb: "https://www.facebook.com/profile.php?id=61558117682417", ig: "https://www.instagram.com/mediterranea_rescue_nl/", x: "" },
+        { city: "Padova", lat: 45.4064, lng: 11.8768, mail: "mediterranea.padova.edt@gmail.com", fb: "https://www.facebook.com/mediterraneapadova/", ig: "https://www.instagram.com/mediterranea_padova/", x: "" },
+        { city: "Palermo", lat: 38.1157, lng: 13.3615, mail: "mediterranearescue.palermo@gmail.com", fb: "https://m.facebook.com/MediterraneaPalermo/", ig: "https://instagram.com/mediterraneapalermo", x: "" },
+        { city: "Parma", lat: 44.8015, lng: 10.3279, mail: "mediterranea.parma@gmail.com", fb: "https://www.facebook.com/profile.php?id=100091757214420", ig: "https://www.instagram.com/mediterranea_parma/", x: "" },
+        { city: "Pesaro", lat: 43.9110, lng: 12.9130, mail: "pesaro-mediterranea@libero.it", fb: "https://www.facebook.com/mediterraneapesaro/", ig: "https://www.instagram.com/mediterraneapesaro/", x: "" },
+        { city: "Pescara", lat: 42.4618, lng: 14.2142, mail: "mediterraneasavinghumans.pe@gmail.com", fb: "https://www.facebook.com/mediterraneapescara/", ig: "https://instagram.com/mediterranea_pescara", x: "" },
+        { city: "Pistoia", lat: 43.9317, lng: 10.9167, mail: "mediterraneapistoia@gmail.com", fb: "https://www.facebook.com/MediterraneaRescuePistoia", ig: "https://www.instagram.com/mediterraneapistoia/", x: "" },
+        { city: "Reggio Emilia", lat: 44.7000, lng: 10.6333, mail: "mediterranea.reggioemilia@gmail.com", fb: "https://www.facebook.com/mediterraneareggioemilia/", ig: "", x: "" },
+        { city: "Rimini", lat: 44.0678, lng: 12.5695, mail: "mediterranearimini@gmail.com", fb: "https://www.facebook.com/profile.php?id=100071141005307", ig: "https://www.instagram.com/mediterranearimini/", x: "" },
+        { city: "Roma", lat: 41.9028, lng: 12.4964, mail: "mediterraneash.roma@gmail.com", fb: "https://www.facebook.com/Mediterranearoma/", ig: "https://instagram.com/mediterranearoma", x: "" },
+        { city: "Rovigo Centro", lat: 45.071, lng: 11.791, mail: "mediterranea.rovigo@gmail.com", fb: "https://www.facebook.com/profile.php?id=61577940503031", ig: "https://www.instagram.com/mediterranea_rovigocentro/", x: "" },
+        { city: "Rovigo Polesine", lat: 45.063, lng: 11.775, mail: "mediterranea.polesine.ro@gmail.com", fb: "https://www.facebook.com/profile.php?id=100070144145514", ig: "https://www.instagram.com/mediterranea_polesine.rovigo/", x: "" },
+        { city: "Scafati", lat: 40.7483, lng: 14.5264, mail: "mediterranea.scafati@gmail.com", fb: "https://www.facebook.com/mediterraneascafati/", ig: "https://www.instagram.com/mediterranea_scafati/", x: "" },
+        { city: "Switzerland", lat: 46.9480, lng: 7.4474, mail: "mediterranea.ch@gmail.com", fb: "https://www.facebook.com/mediterranea.ch", ig: "https://www.instagram.com/mediterranea.switzerland/", x: "" },
+        { city: "Taranto", lat: 40.4677, lng: 17.2435, mail: "mediterranea.ta@gmail.com", fb: "https://www.facebook.com/MediterraneaSHTaranto", ig: "https://instagram.com/mediterraneataranto?igshid=YmMyMTA2M2Y=", x: "" },
+        { city: "Termoli", lat: 41.9880, lng: 14.9910, mail: "mediterraneatermoli@gmail.com", fb: "https://www.facebook.com/mediterraneatermoli/", ig: "https://www.instagram.com/mediterranea_termoli/", x: "" },
+        { city: "Torino", lat: 45.0703, lng: 7.6869, mail: "mediterraneatorino@gmail.com", fb: "https://www.facebook.com/mediterraneatorino/", ig: "https://instagram.com/mediterranea_torino", x: "" },
+        { city: "Trapani", lat: 38.0177, lng: 12.5451, mail: "mediterraneatrapani@gmail.com", fb: "https://www.facebook.com/profile.php?id=61583542696197", ig: "https://www.instagram.com/mediterraneatrapani/", x: "" },
+        { city: "Trento", lat: 46.0679, lng: 11.1211, mail: "mediterraneatrento@gmail.com", fb: "https://www.facebook.com/MediterraneaTrento/", ig: "https://instagram.com/mediterranea.trento", x: "" },
+        { city: "Varese", lat: 45.8192, lng: 8.8250, mail: "mediterranea.edt.varese@gmail.com", fb: "https://www.facebook.com/profile.php?id=61560110800643", ig: "https://www.instagram.com/mediterraneavarese/", x: "" },
+        { city: "Venezia", lat: 45.4408, lng: 12.3155, mail: "mediterranea.ve@gmail.com", fb: "https://www.facebook.com/RescueMedVenezia/", ig: "https://instagram.com/medvenezia", x: "https://twitter.com/RescueMedVe" },
+        { city: "Verona", lat: 45.4384, lng: 10.9916, mail: "mediterranea.vr@gmail.com", fb: "https://www.facebook.com/mediterraneaverona/", ig: "https://instagram.com/mediterranea_verona", x: "https://twitter.com/RescueMedVr" },
+        { city: "Vicenza", lat: 45.5479, lng: 11.5497, mail: "mediterranea.vi@gmail.com", fb: "https://www.facebook.com/mediterraneavicenza/", ig: "", x: "" }
+    ];
+
+    // Custom Icon (Mediterranean Orange)
+    const medIcon = L.divIcon({
+        html: '<i class="fa-solid fa-location-dot" style="color: var(--med-orange); font-size: 24px;"></i>',
+        className: 'custom-div-icon',
+        iconSize: [24, 24],
+        iconAnchor: [12, 24],
+        popupAnchor: [0, -24]
+    });
+
+    // Add markers to the map
+    equipaggi.forEach(item => {
+        let popupContent = `
+            <div class="popup-title">${item.city}</div>
+            <div class="social-buttons">
+                ${item.mail ? `<a href="mailto:${item.mail}" class="social-btn btn-email" title="Email"><i class="fas fa-envelope"></i>Email</a>` : ''}
+                ${item.fb ? `<a href="${item.fb}" target="_blank" class="social-btn btn-fb" title="Facebook"><i class="fab fa-facebook-f"></i>Facebook</a>` : ''}
+                ${item.ig ? `<a href="${item.ig}" target="_blank" class="social-btn btn-ig" title="Instagram"><i class="fab fa-instagram"></i>Instagram</a>` : ''}
+                ${item.x ? `<a href="${item.x}" target="_blank" class="social-btn btn-x" title="X"><i class="fab fa-x-twitter"></i>X</a>` : ''}
+            </div>
+        `;
+
+        L.marker([item.lat, item.lng], { icon: medIcon })
+            .bindPopup(popupContent)
+            .addTo(map);
+    });
+</script>
+
+</body>
+</html>
