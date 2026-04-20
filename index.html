@@ -63,13 +63,6 @@
             stroke-width: 0.5;
         }
 
-        .region-path {
-            fill: none;
-            stroke: var(--med-white);
-            stroke-width: 0.3;
-            stroke-dasharray: 2, 2;
-        }
-
         .marker {
             fill: var(--med-orange);
             stroke: var(--med-white);
@@ -220,9 +213,8 @@
 
         // Load Data
         Promise.all([
-            d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json"),
-            d3.json("https://raw.githubusercontent.com/openpolis/geojson-italy/master/geojson/limits_IT_regions.geojson")
-        ]).then(([world, italy]) => {
+            d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
+        ]).then(([world]) => {
             
             const locations = [
   {
@@ -772,13 +764,6 @@
                 .data(countries.features)
                 .enter().append("path")
                 .attr("class", "country-path")
-                .attr("d", path);
-
-            // Draw Italy Regions
-            g.selectAll(".region-path")
-                .data(italy.features)
-                .enter().append("path")
-                .attr("class", "region-path")
                 .attr("d", path);
 
             // Markers
