@@ -6,7 +6,7 @@
     <title>Mediterranea Saving Humans - Mappa Equipaggi</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://unpkg.com/topojson-client@3"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root {
             --med-orange: #FF5B00;
@@ -803,7 +803,7 @@
                 if (d.mail) icons += '<i class="fas fa-envelope"></i>';
                 if (d.fb) icons += '<i class="fab fa-facebook-f"></i>';
                 if (d.ig) icons += '<i class="fab fa-instagram"></i>';
-                if (d.x) icons += '<i class="fab fa-x-twitter"></i>';
+                if (d.x) icons += '<i class="fa-brands fa-x-twitter"></i>';
                 
                 tooltip.style("display", "block")
                     .html(`<strong>${d.name}</strong> ${icons}`);
@@ -894,7 +894,7 @@
                         .attr("target", "_blank")
                         .attr("class", "social-btn")
                         .attr("title", "X")
-                        .html('<i class="fab fa-x-twitter"></i> X');
+                        .html('<i class="fa-brands fa-x-twitter"></i> X');
                 }
 
                 // Position popup
