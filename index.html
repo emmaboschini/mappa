@@ -4,119 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mappa Equipaggi Mediterranea</title>
-    
-    <!-- Leaflet & Plugins -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-    
-    <!-- Icons & Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
-    
     <style>
-        :root {
-            --med-orange: #e94e1b;
-            --med-blue: #18407e;
-            --med-light-blue: #388ecd;
-            --med-white: #ffffff;
-        }
-
+        :root { --med-orange: #e94e1b; --med-blue: #18407e; --med-light-blue: #388ecd; }
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Montserrat', sans-serif; background-color: #18407e; overflow: hidden; }
         #map { height: 100vh; width: 100%; background-color: #18407e; }
-
-        /* Filtri */
-        .filter-container {
-            position: absolute; top: 20px; right: 20px; z-index: 2000;
-            background: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4); width: 260px; border-top: 4px solid #e94e1b;
-        }
+        .filter-container { position: absolute; top: 20px; right: 20px; z-index: 2000; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); width: 260px; border-top: 4px solid #e94e1b; }
         .filter-title { color: #18407e; font-weight: 700; margin-bottom: 15px; font-size: 1.1rem; text-transform: uppercase; }
         .filter-group { margin-bottom: 15px; }
         .filter-label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: #18407e; opacity: 0.8; }
-        select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; font-family: inherit; font-size: 0.9rem; color: #18407e; outline: none; background: white; }
-
-        /* Popup */
+        select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd; font-family: inherit; font-size: 0.9rem; color: #18407e; outline: none; }
+        .city-label { background: transparent !important; border: none !important; box-shadow: none !important; color: #18407e; font-weight: 700; font-size: 0.8rem; text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff; white-space: nowrap; }
         .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; overflow: hidden; }
         .leaflet-popup-content { margin: 0 !important; width: 220px !important; }
-        .popup-header { background: #18407e; color: white; padding: 15px; text-align: center; font-weight: 700; }
+        .popup-header { background: #18407e; color: white; padding: 12px; text-align: center; font-weight: 700; }
         .popup-body { padding: 15px; }
         .social-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .social-btn {
-            display: flex; align-items: center; justify-content: center; padding: 10px; border-radius: 6px;
-            text-decoration: none; color: white !important; font-size: 0.8rem; font-weight: 700;
-            background-color: #18407e; transition: all 0.2s;
-        }
-        .social-btn:hover { background-color: #e94e1b; transform: translateY(-2px); }
-
-        /* Labels */
-        .city-label {
-            background: transparent !important; border: none !important; box-shadow: none !important;
-            color: #18407e; font-weight: 700; font-size: 0.8rem;
-            text-shadow: 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
-            white-space: nowrap;
-        }
-
-        /* Cluster Personalizzati */
+        .social-btn { display: flex; align-items: center; justify-content: center; padding: 8px; border-radius: 6px; text-decoration: none; color: white !important; font-size: 0.75rem; font-weight: 700; background-color: #18407e; }
+        .social-btn:hover { background-color: #e94e1b; }
         .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large { background-color: rgba(233, 78, 27, 0.4); }
-        .marker-cluster div { background-color: #e94e1b; color: white; font-weight: 700; border-radius: 50%; }
-
-        @media (max-width: 600px) { .filter-container { width: calc(100% - 40px); top: auto; bottom: 20px; right: 20px; } }
+        .marker-cluster div { background-color: #e94e1b; color: white; font-weight: 700; }
     </style>
 </head>
 <body>
-
 <div class="filter-container">
     <div class="filter-title">Equipaggi</div>
-    <div class="filter-group">
-        <label class="filter-label">Paese</label>
-        <select id="country-filter"><option value="all">Tutti i Paesi</option></select>
-    </div>
-    <div id="region-group" class="filter-group" style="display: none;">
-        <label class="filter-label">Regione (Italia)</label>
-        <select id="region-filter"><option value="all">Tutte le Regioni</option></select>
-    </div>
+    <div class="filter-group"><label class="filter-label">Paese</label><select id="country-filter"><option value="all">Tutti i Paesi</option></select></div>
+    <div id="region-group" class="filter-group" style="display: none;"><label class="filter-label">Regione (Italia)</label><select id="region-filter"><option value="all">Tutte le Regioni</option></select></div>
 </div>
-
 <div id="map"></div>
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
-
 <script>
-    const map = L.map('map', {
-        center: [42, 12],
-        zoom: 6,
-        minZoom: 2
-    });
+    const map = L.map('map', { center: [42, 12.5], zoom: 6, minZoom: 2 });
+    map.createPane('bgPane'); map.getPane('bgPane').style.zIndex = 100;
+    map.createPane('fgPane'); map.getPane('fgPane').style.zIndex = 600;
 
-    // Pane per i marker per forzarli in primo piano (z-index altissimo)
-    map.createPane('markerPaneTop');
-    map.getPane('markerPaneTop').style.zIndex = 650;
-
-    // 1. Carica i Confini del Mondo (Terre Bianche)
-    fetch('https://raw.githubusercontent.com/datasets/geo-boundaries-world-110m/master/countries.geojson')
-        .then(res => res.json())
-        .then(worldData => {
-            L.geoJSON(worldData, {
-                style: { fillColor: '#ffffff', fillOpacity: 1, color: '#388ecd', weight: 1, opacity: 1 }
-            }).addTo(map);
-
-            // 2. Carica i Confini Regionali Italiani (Sopra la terra)
-            return fetch('https://raw.githubusercontent.com/openpolis/geojson-italy/master/geojson/limits_IT_regions.json');
-        })
-        .then(res => res.json())
-        .then(italyData => {
-            L.geoJSON(italyData, {
-                style: { fillColor: 'transparent', color: '#388ecd', weight: 0.5, opacity: 0.4 }
-            }).addTo(map);
-
-            // 3. Carica i Marker dopo che la mappa è pronta
-            initMarkers();
-        })
-        .catch(err => {
-            console.error("Errore caricamento GeoJSON:", err);
-            initMarkers(); // Carica comunque i marker
+    // Sfondo professionale (caricato indipendentemente)
+    fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
+        .then(r => r.json()).then(data => {
+            L.geoJSON(data, { pane: 'bgPane', style: { fillColor: '#ffffff', fillOpacity: 1, color: '#388ecd', weight: 1 } }).addTo(map);
         });
 
     const equipaggi = [
@@ -144,7 +75,7 @@
         { city: "Messina", country: "Italia", region: "Sicilia", lat: 38.1938, lng: 15.5540, mail: "mediterranea.messina@gmail.com", fb: "", ig: "https://www.instagram.com/mediterranea_messina/", x: "" },
         { city: "Milano", country: "Italia", region: "Lombardia", lat: 45.4642, lng: 9.1900, mail: "mediterranea.milano.edt@gmail.com", fb: "https://www.facebook.com/mediterraneamilano/", ig: "https://www.instagram.com/mediterranea_milano/", x: "" },
         { city: "Modena", country: "Italia", region: "Emilia-Romagna", lat: 44.6471, lng: 10.9252, mail: "mediterranea.modena@gmail.com", fb: "https://www.facebook.com/mediterraneamodena/", ig: "https://instagram.com/mediterranea_modena", x: "" },
-        { city: "Monaco di Baviera", country: "Germania", region: "", lat: 48.1351, lng: 11.5820, mail: "mediterranea.munich@gmail.com", fb: "", ig: "https://www.instagram.com/mediterranea_munich/", x: "" },
+        { city: "Monaco", country: "Germania", region: "", lat: 48.1351, lng: 11.5820, mail: "mediterranea.munich@gmail.com", fb: "", ig: "https://www.instagram.com/mediterranea_munich/", x: "" },
         { city: "Napoli", country: "Italia", region: "Campania", lat: 40.8518, lng: 14.2681, mail: "napoli@mediterranearescue.org", fb: "https://www.facebook.com/MediterraneaNapoli/", ig: "https://instagram.com/mediterraneanapoli", x: "https://twitter.com/RescueMedNa" },
         { city: "Paesi Bassi", country: "Paesi Bassi", region: "", lat: 52.3676, lng: 4.9041, mail: "mediterraneanetherlands@gmail.com", fb: "https://www.facebook.com/profile.php?id=61558117682417", ig: "https://www.instagram.com/mediterranea_rescue_nl/", x: "" },
         { city: "Padova", country: "Italia", region: "Veneto", lat: 45.4064, lng: 11.8768, mail: "mediterranea.padova.edt@gmail.com", fb: "https://www.facebook.com/mediterraneapadova/", ig: "https://www.instagram.com/mediterranea_padova/", x: "" },
@@ -171,79 +102,42 @@
         { city: "Vicenza", country: "Italia", region: "Veneto", lat: 45.5479, lng: 11.5497, mail: "mediterranea.vi@gmail.com", fb: "https://www.facebook.com/mediterraneavicenza/", ig: "", x: "" }
     ];
 
-    const markersCluster = L.markerClusterGroup({
-        showCoverageOnHover: false,
-        spiderfyOnMaxZoom: true,
-        disableClusteringAtZoom: 8,
-        maxClusterRadius: 40
-    });
+    const markersCluster = L.markerClusterGroup({ clusterPane: 'fgPane' });
     map.addLayer(markersCluster);
 
-    function initMarkers() {
-        const countrySelect = document.getElementById('country-filter');
-        const regionSelect = document.getElementById('region-filter');
-        const regionGroup = document.getElementById('region-group');
+    function updateMap() {
+        const cVal = document.getElementById('country-filter').value;
+        const rVal = document.getElementById('region-filter').value;
+        document.getElementById('region-group').style.display = (cVal === "Italia") ? "block" : "none";
+        
+        markersCluster.clearLayers();
+        const filtered = equipaggi.filter(e => (cVal === "all" || e.country === cVal) && (rVal === "all" || e.region === rVal));
 
-        const countries = [...new Set(equipaggi.map(e => e.country))].sort();
-        countries.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = opt.textContent = c;
-            countrySelect.appendChild(opt);
+        filtered.forEach((e, idx) => {
+            const marker = L.circleMarker([e.lat, e.lng], {
+                pane: 'fgPane', radius: 10, fillColor: "#e94e1b", color: "#ffffff", weight: 3, fillOpacity: 1
+            }).bindPopup(`<div class="popup-header">${e.city}</div><div class="popup-body"><div class="social-grid">` +
+                (e.mail ? `<a href="mailto:${e.mail}" class="social-btn"><i class="fas fa-envelope"></i>Email</a>` : '') +
+                (e.fb ? `<a href="${e.fb}" target="_blank" class="social-btn"><i class="fab fa-facebook-f"></i>FB</a>` : '') +
+                (e.ig ? `<a href="${e.ig}" target="_blank" class="social-btn"><i class="fab fa-instagram"></i>IG</a>` : '') +
+                (e.x ? `<a href="${e.x}" target="_blank" class="social-btn"><i class="fab fa-x-twitter"></i>X</a>` : '') +
+                `</div></div>`);
+
+            marker.bindTooltip(e.city, { permanent: true, direction: ['right','left','top','bottom'][idx%4], className: 'city-label', offset: [12,-12] });
+            markersCluster.addLayer(marker);
         });
-
-        const regions = [...new Set(equipaggi.filter(e => e.country === "Italia").map(e => e.region))].sort();
-        regions.forEach(r => {
-            const opt = document.createElement('option');
-            opt.value = opt.textContent = r;
-            regionSelect.appendChild(opt);
-        });
-
-        function updateMap() {
-            const cVal = countrySelect.value;
-            const rVal = regionSelect.value;
-            regionGroup.style.display = (cVal === "Italia") ? "block" : "none";
-            if (cVal !== "Italia") regionSelect.value = "all";
-
-            markersCluster.clearLayers();
-
-            const filtered = equipaggi.filter(e => {
-                return (cVal === "all" || e.country === cVal) && (rVal === "all" || e.region === rVal);
-            });
-
-            filtered.forEach((e, idx) => {
-                const popupHtml = `
-                    <div class="popup-header">${e.city}</div>
-                    <div class="popup-body"><div class="social-grid">
-                        ${e.mail ? `<a href="mailto:${e.mail}" class="social-btn"><i class="fas fa-envelope"></i>Email</a>` : ''}
-                        ${e.fb ? `<a href="${e.fb}" target="_blank" class="social-btn"><i class="fab fa-facebook-f"></i>FB</a>` : ''}
-                        ${e.ig ? `<a href="${e.ig}" target="_blank" class="social-btn"><i class="fab fa-instagram"></i>IG</a>` : ''}
-                        ${e.x ? `<a href="${e.x}" target="_blank" class="social-btn"><i class="fab fa-x-twitter"></i>X</a>` : ''}
-                    </div></div>
-                `;
-
-                const marker = L.circleMarker([e.lat, e.lng], {
-                    radius: 9, fillColor: "#e94e1b", color: "#ffffff", weight: 3, fillOpacity: 1
-                }).bindPopup(popupHtml);
-
-                const dirs = ['right', 'left', 'top', 'bottom'];
-                marker.bindTooltip(e.city, {
-                    permanent: true, direction: dirs[idx % 4], className: 'city-label', offset: [12, -12]
-                });
-                
-                markersCluster.addLayer(marker);
-            });
-
-            if (filtered.length > 0) {
-                const bounds = L.featureGroup(filtered.map(e => L.marker([e.lat, e.lng]))).getBounds();
-                map.fitBounds(bounds.pad(0.2));
-            }
-        }
-
-        countrySelect.addEventListener('change', updateMap);
-        regionSelect.addEventListener('change', updateMap);
-        updateMap();
+        if (filtered.length > 0) map.fitBounds(L.featureGroup(filtered.map(e => L.marker([e.lat, e.lng]))).getBounds().pad(0.2));
     }
-</script>
 
+    // Inizializza Filtri
+    const countries = [...new Set(equipaggi.map(e => e.country))].sort();
+    countries.forEach(c => { const o = document.createElement('option'); o.value = o.textContent = c; document.getElementById('country-filter').appendChild(o); });
+    const regions = [...new Set(equipaggi.filter(e => e.country === "Italia").map(e => e.region))].sort();
+    regions.forEach(r => { const o = document.createElement('option'); o.value = o.textContent = r; document.getElementById('region-filter').appendChild(o); });
+
+    document.getElementById('country-filter').addEventListener('change', updateMap);
+    document.getElementById('region-filter').addEventListener('change', updateMap);
+    updateMap();
+</script>
 </body>
 </html>
