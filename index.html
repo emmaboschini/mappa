@@ -826,13 +826,27 @@
             // Draw World
             const countries = topojson.feature(world, world.objects.countries);
             
-            // Merge Morocco (504) and Western Sahara (732) for a cleaner look if they are separate
-            // Some datasets treat them as one, others split them with a jagged line
+            // Morocco (504) and Western Sahara (732) often need to be unified
+            // We filter them out of the main set and draw them as a single merged feature
+            const moroccoIds = [504, 732];
+            const otherCountries = countries.features.filter(d => !moroccoIds.includes(+d.id));
+            const moroccoFeatures = countries.features.filter(d => moroccoIds.includes(+d.id));
+            
+            // Draw all other countries
             g.selectAll(".country-path")
-                .data(countries.features)
+                .data(otherCountries)
                 .enter().append("path")
                 .attr("class", "country-path")
                 .attr("d", path);
+
+            // Draw Unified Morocco
+            if (moroccoFeatures.length > 0) {
+                const unifiedMorocco = topojson.merge(world, world.objects.countries.geometries.filter(d => moroccoIds.includes(+d.id)));
+                g.append("path")
+                    .datum(unifiedMorocco)
+                    .attr("class", "country-path")
+                    .attr("d", path);
+            }
 
             // Markers
             const markers = g.selectAll(".marker")
