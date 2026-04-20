@@ -196,21 +196,35 @@
         maxBounds: [[-90, -180], [90, 180]]
     });
 
-    // Load World GeoJSON for a professional minimalist look
-    fetch('https://raw.githubusercontent.com/datasets/geo-boundaries-world-110m/master/countries.geojson')
+    // Create a pane for the background to ensure markers stay on top
+    map.createPane('background');
+    map.getPane('background').style.zIndex = 100;
+
+    // Background Tile Layer (Fallback if GeoJSON fails)
+    const baseTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+        pane: 'background'
+    }).addTo(map);
+
+    // Load World GeoJSON
+    fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
         .then(response => response.json())
         .then(data => {
             L.geoJSON(data, {
+                pane: 'background',
                 style: function(feature) {
                     return {
-                        fillColor: '#ffffff', // Land color
+                        fillColor: '#ffffff',
                         fillOpacity: 1,
-                        color: 'var(--med-light-blue)', // Border color
+                        color: 'var(--med-light-blue)',
                         weight: 0.8,
                         opacity: 1
                     };
                 }
             }).addTo(map);
+        })
+        .catch(err => {
+            console.error("GeoJSON load failed:", err);
+            // Fallback is already added as baseTiles
         });
 
     // Data from CSV geocoded with Country and Region
