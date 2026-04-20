@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mediterranea Saving Humans - Mappa Equipaggi</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/topojson-client@3"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --med-orange: #FF5B00;
+            --med-blue: #00235D;
+            --med-light-blue: #009EE0;
+            --med-white: #FFFFFF;
+            --med-dark: #001a44;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--med-blue);
+            color: var(--med-white);
+        }
+
+        #map-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 35, 93, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--med-light-blue);
+        }
+
+        select {
+            background-color: var(--med-white);
+            color: var(--med-blue);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            outline: none;
+        }
+
+        .country-path {
+            fill: var(--med-dark);
+            stroke: var(--med-light-blue);
+            stroke-width: 0.5;
+        }
+
+        .region-path {
+            fill: none;
+            stroke: var(--med-white);
+            stroke-width: 0.3;
+            stroke-dasharray: 2, 2;
+        }
+
+        .marker {
+            fill: var(--med-orange);
+            stroke: var(--med-white);
+            stroke-width: 1;
+            cursor: pointer;
+            transition: r 0.2s ease-in-out, fill 0.2s;
+        }
+
+        .marker:hover {
+            fill: var(--med-light-blue);
+            r: 8;
+        }
+
+        .popup {
+            position: absolute;
+            background: var(--med-white);
+            color: var(--med-blue);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            pointer-events: all;
+            min-width: 180px;
+            display: none;
+            z-index: 2000;
+        }
+
+        .popup h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.2em;
+            color: var(--med-blue);
+            border-bottom: 2px solid var(--med-orange);
+            padding-bottom: 5px;
+        }
+
+        .social-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .social-btn {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 4px;
+            background-color: var(--med-orange);
+            color: var(--med-white);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: bold;
+            transition: opacity 0.2s;
+            gap: 10px;
+        }
+
+        .social-btn i {
+            width: 20px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .social-btn:hover {
+            opacity: 0.8;
+        }
+
+        .close-popup {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 24px;
+            color: var(--med-blue);
+            line-height: 1;
+        }
+
+        #zoom-hint {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.8em;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="controls">
+        <select id="country-filter">
+            <option value="all">Tutti i Paesi</option>
+        </select>
+        <select id="region-filter">
+            <option value="all">Tutte le Regioni</option>
+        </select>
+    </div>
+
+    <div id="map-container">
+        <svg id="map"></svg>
+        <div id="popup" class="popup">
+            <span class="close-popup">&times;</span>
+            <h3 id="popup-title">Città</h3>
+            <div class="social-buttons" id="popup-socials"></div>
+        </div>
+        <div id="zoom-hint">Usa la rotellina per zoomare e trascina per spostarti</div>
+    </div>
+
+    <script>
+        const config = {
+            colors: {
+                orange: '#FF5B00',
+                blue: '#00235D',
+                lightBlue: '#009EE0',
+                white: '#FFFFFF',
+                dark: '#001a44'
+            }
+        };
+
+        const svg = d3.select("#map");
+        const g = svg.append("g");
+        const container = document.getElementById("map-container");
+        
+        let width = container.clientWidth;
+        let height = container.clientHeight;
+        
+        svg.attr("width", width).attr("height", height);
+
+        const projection = d3.geoMercator()
+            .center([15, 45]) // Adjusted center to see more of Europe/Mediterranean
+            .scale(width * 1.5) 
+            .translate([width / 2, height / 2]);
+
+        const path = d3.geoPath().projection(projection);
+
+        const zoom = d3.zoom()
+            .scaleExtent([0.5, 40])
+            .on("zoom", (event) => {
+                g.attr("transform", event.transform);
+                // Maintain marker size
+                g.selectAll(".marker")
+                    .attr("r", 5 / event.transform.k)
+                    .attr("stroke-width", 1 / event.transform.k);
+                g.selectAll(".country-path")
+                    .attr("stroke-width", 0.5 / event.transform.k);
+                g.selectAll(".region-path")
+                    .attr("stroke-width", 0.3 / event.transform.k);
+            });
+
+        svg.call(zoom);
+
+        // Load Data
+        Promise.all([
+            d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json"),
+            d3.json("https://raw.githubusercontent.com/openpolis/geojson-italy/master/geojson/limits_IT_regions.geojson")
+        ]).then(([world, italy]) => {
+            
+            const locations = [
+  {
+    "name": "Alcamo",
+    "mail": "mediterraneaalcamo@gmail.com",
+    "fb": "https://www.facebook.com/mediterraneaalcamo/",
+    "ig": "https://www.instagram.com/mediterraneapesaro/",
+    "x": "",
+    "lat": 37.98,
+    "lon": 12.96,
+    "country": "Italy",
+    "region": "Sicilia"
+  },
+  {
+    "name": "Alta Murgia",
+    "mail": "mediterranea.altamurgia@gmail.com",
+    "fb": "",
+    "ig": "https://www.instagram.com/mediterraneaaltamurgia/",
+    "x": "",
+    "lat": 40.83,
+    "lon": 16.55,
+    "country": "Italy",
+    "region": "Puglia"
+  },
+  {
+    "name": "Barcellona",
+    "mail": "bcn@mediterranearescue.org",
+    "fb": "https://www.facebook.com/mediterraneabcn/",
+    "ig": "https://instagram.com/mediterraneabcn",
+    "x": "",
+    "lat": 41.38,
+    "lon": 2.17,
+    "country": "Spain",
+    "region": null
+  },
+  {
+    "name": "Bari",
+    "mail": "mediterranea.ba@gmail.com",
+    "fb": "",
+    "ig": "",
+    "x": "",
+    "lat": 41.11,
+    "lon": 16.87,
+    "country": "Italy",
+    "region": "Puglia"
+  },
+  {
+    "name": "Belluno",
+    "mail": "mediterraneabelluno@gmail.com",
+    "fb": "",
+    "ig": "https://www.instagram.com/mediterranea_belluno/",
+    "x": "",
+    "lat": 46.14,
+    "lon": 12.21,
+    "country": "Italy",
+    "region": "Veneto"
+  },
+  {
+    "name": "Bergamo",
+    "mail": "mediterraneabergamo@gmail.com",
+    "fb": "https://www.facebook.com/Mediterranea-Bergamo-101641805420219/",
+    "ig": "https://www.instagram.com/mediterraneabg/",
+    "x": "",
+    "lat": 45.69,
+    "lon": 9.67,
+    "country": "Italy",
+    "region": "Lombardia"
+  },
+  {
+    "name": "Berlino",
+    "mail": "berlinersformediterranea@gmail.com",
+    "fb": "https://www.facebook.com/mediterraneaberlinev",
+    "ig": "https://instagram.com/berliners4mediterranea",
+    "x": "https://twitter.com/berlinersfor",
+    "lat": 52.52,
+    "lon": 13.4,
+    "country": "Germany",
+    "region": null
+  },
+  {
+    "name": "Bologna",
+    "mail": "mediterraneabologna@gmail.com",
+    "fb": "https://www.facebook.com/Mediterranea-Bologna-108241648276513/",
+    "ig": "https://instagram.com/mediterranea_bologna",
+    "x": "",
+    "lat": 44.49,
+    "lon": 11.34,
+    "country": "Italy",
+    "region": "Emilia-Romagna"
+  },
+  {
+    "name": "Bolzano",
+    "mail": "mediterraneabolzano@gmail.com",
+    "fb": "https://www.facebook.com/profile.php?id=61553880287176",
+    "ig": "https://www.instagram.com/mediterranea_bz/",
+    "x": "",
+    "lat": 46.5,
+    "lon": 11.35,
+    "country": "Italy",
+    "region": "Trentino-Alto Adige"
+  },
+  {
+    "name": "Brescia",
+    "mail": "bresciapermediterranea@gmail.com",
+    "fb": "https://www.facebook.com/Bresciapermediterranea/",
+    "ig": "https://instagram.com/bresciapermediterranea",
+    "x": "https://twitter.com/med_brescia1",
+    "lat": 45.54,
+    "lon": 10.21,
+    "country": "Italy",
+    "region": "Lombardia"
+  },
+  {
+    "name": "Bruxelles",
+    "mail": "mediterraneabxl@gmail.com",
+    "fb": "https://www.facebook.com/mediterraneabxl",
+    "ig": "https://www.instagram.com/mediterraneabxl/",
+    "x": "",
+    "lat": 50.85,
+    "lon": 4.35,
+    "country": "Belgium",
+    "region": null
+  },
+  {
+    "name": "Carpi",
+    "mail": "carpimediterranea@gmail.com",
+    "fb": "https://www.facebook.com/mediterraneacarpi/",
+    "ig": "https://instagram.com/mediterraneacarpi",
+    "x": "",
+    "lat": 44.78,
+    "lon": 10.87,
+    "country": "Italy",
+    "region": "Emilia-Romagna"
+  },
+  {
+    "name": "Chioggia",
+    "mail": "mediterranea.chioggia@gmail.com",
+    "fb": "https://www.facebook.com/RescueMedChioggia",
+    "ig": "https://www.instagram.com/mediterranea_chioggia/",
+    "x": "",
+    "lat": 45.21,
+    "lon": 12.27,
+    "country": "Italy",
+    "region": "Veneto"
+  },
+  {
+    "name": "Empolese Valdelsa",
+    "mail": "mediterraneaempolesevaldelsa@gmail.com",
+    "fb": "https://www.facebook.com/mediterraneaempolesevaldelsa/",
+    "ig": "https://instagram.com/mediterraneaempolese",
+    "x": "",
+    "lat": 43.71,
+    "lon": 10.94,
+    "country": "Italy",
+    "region": "Toscana"
+  },
+  {
+    "name": "Ferrara",
+    "mail": "mediterranea.fe@gmail.com",
+    "fb": "https://www.facebook.com/profile.php?id=100083339257177",
+    "ig": "https://www.instagram.com/mediterraneaferrara/",
+    "x": "",
+    "lat": 44.83,
+    "lon": 11.61,
+    "country": "Italy",
+    "region": "Emilia-Romagna"
+  },
+  {
+    "name": "Firenze",
+    "mail": "firenzemediterranea@gmail.com",
+    "fb": "https://www.facebook.com/MediterraneaFirenzeEdT/",
+    "ig": "https://instagram.com/mediterraneafirenze",
+    "x": "",
+    "lat": 43.76,
+    "lon": 11.25,
+    "country": "Italy",
+    "region": "Toscana"
+  },
+  {
+    "name": "Forlì Cesena",
+    "mail": "mediterraneasavinghumansfc@gmail.com",
+    "fb": "https://www.facebook.com/mediterranearescuefc/",
+    "ig": "https://instagram.com/mediterranea_forlicesena",
+    "x": "",
+    "lat": 44.22,
+    "lon": 12.04,
+    "country": "Italy",
+    "region": "Emilia-Romagna"
+  },
+  {
+    "name": "Formigine",
+    "mail": "mediterranea.formigine@gmail.com",
+    "fb": "https://www.facebook.com/mediterraneaformigine/",
+    "ig": "https://instagram.com/mediterranea_formigine",
+    "x": "",
+    "lat": 44.57,
+    "lon": 10.84,
+    "country": "Italy",
+    "region": "Emilia-Romagna"
+  },
+  {
+    "name": "Genova/Liguria",
+    "mail": "mediterranea.liguria.edt@gmail.com",
+    "fb": "https://www.facebook.com/mediterraneagenova/",
+    "ig": "https://www.instagram.com/mediterranea_liguria/",
+    "x": "",
+    "lat": 44.4,
+    "lon": 8.94,
+    "country": "Italy",
+    "region": "Liguria"
+  },
+  {
+    "name": "Lecce",
+    "mail": "mediterranea.lecce@gmail.com",
+    "fb": "https://www.facebook.com/profile.php?id=100093579217432",
+    "ig": "https://www.instagram.com/mediterranealecce/",
+    "x": "",
+    "lat": 40.35,
+    "lon": 18.17,
+    "country": "Italy",
+    "region": "Puglia"
+  },
+  {
+    "name": "Marigliano",
+    "mail": "mediterraneamarigliano@gmail.com",
+    "fb": "https://www.facebook.com/profile.php?id=61573428013515",
+    "ig": "https://www.instagram.com/mediterranea.marigliano/",
+    "x": "",
+    "lat": 40.92,
+    "lon": 14.48,
+    "country": "Italy",
+    "region": "Campania"
+  },
+  {
+    "name": "Messina",
+    "mail": "mediterranea.messina@gmail.com",
+    "fb": "",
+    "ig": "https://www.instagram.com/mediterranea_messina/",
+    "x": "",
+    "lat": 38.19,
+    "lon": 15.55,
+    "country": "Italy",
+    "region": "Sicilia"
+  },
+  {
+    "name": "Milano",
+    "mail": "mediterranea.milano.edt@gmail.com",
+    "fb": "https://www.facebook.com/mediterraneamilano/",
+    "ig": "https://www.instagram.com/mediterranea_milano/",
+    "x": "",
+    "lat": 45.46,
+    "lon": 9.18,
+    "country": "Italy",
+    "region": "Lombardia"
+  },
+  {
+    "name": "Modena",
+    "mail": "mediterranea.modena@gmail.com",
+    "fb": "https://www.facebook.com/mediterraneamodena/",
+    "ig": "https://instagram.com/mediterranea_modena",
+    "x": "",
+    "lat": 44.64,
+    "lon": 10.92,
+    "country": "Italy",
+    "region": "Emilia-Romagna"
+  },
+  {
+    "name": "Monaco",
+    "mail": "mediterranea.munich@gmail.com",
+    "fb": "",
+    "ig": "https://www.instagram.com/mediterranea_munich/",
+    "x": "",
+    "lat": 48.13,
+    "lon": 11.58,
+    "country": "Germany",
+    "region": null
+  },
+  {
+    "name": "Napoli",
+    "mail": "napoli@mediterranearescue.org",
+    "fb": "https://www.facebook.com/MediterraneaNapoli/",
+    "ig": "https://instagram.com/mediterraneanapoli",
+    "x": "https://twitter.com/RescueMedNa",
+    "lat": 40.85,
+    "lon": 14.26,
+    "country": "Italy",
+    "region": "Campania"
+  },
+  {
+    "name": "Paesi Bassi",
+    "mail": "mediterraneanetherlands@gmail.com",
+    "fb": "https://www.facebook.com/profile.php?id=61558117682417",
+    "ig": "https://www.instagram.com/mediterranea_rescue_nl/",
+    "x": "",
+    "lat": 52.13,
+    "lon": 5.29,
+    "country": "Netherlands",
+    "region": null
+  },
+  {
+    "name": "Padova",
+    "mail": "mediterranea.padova.edt@gmail.com",
+    "fb": "https://www.facebook.com/mediterraneapadova/",
+    "ig": "https://www.instagram.com/mediterranea_padova/",
+    "x": "",
+    "lat": 45.4,
+    "lon": 11.87,
+    "country": "Italy",
+    "region": "Veneto"
+  },
+  {
+    "name": "Palermo",
+    "mail": "mediterranearescue.palermo@gmail.com",
+    "fb": "https://m.facebook.com/MediterraneaPalermo/",
+    "ig": "https://instagram.com/mediterraneapalermo",
+    "x": "",
+    "lat": 38.11,
+    "lon": 13.36,
+    "country": "Italy",
+    "region": "Sicilia"
+  },
+  {
+    "name": "Parma",
+    "mail": "mediterranea.parma@gmail.com",
+    "fb": "https://www.facebook.com/profile.php?id=100091757214420",
+    "ig": "https://www.instagram.com/mediterranea_parma/",
+    "x": "",
+    "lat": 44.8,
+    "lon": 10.32,
+    "country": "Italy",
+    "region": "Emilia-Romagna"
+  },
+  {
+    "name": "Pesaro",
+    "mail": "pesaro-mediterranea@libero.it",
+    "fb": "https://www.facebook.com/mediterraneapesaro/",
+    "ig": "https://www.instagram.com/mediterraneapesaro/",
+    "x": "",
+    "lat": 43.91,
+    "lon": 12.91,
+    "country": "Italy",
+    "region": "Marche"
+  },
+  {
+    "name": "Pescara",
+    "mail": "mediterraneasavinghumans.pe@gmail.com",
+    "fb": "https://www.facebook.com/mediterraneapescara/",
+    "ig": "https://instagram.com/mediterranea_pescara",
+    "x": "",
+    "lat": 42.46,
+    "lon": 14.21,
+    "country": "Italy",
+    "region": "Abruzzo"
+  },
+  {
+    "name": "Pistoia",
+    "mail": "mediterraneapistoia@gmail.com",
+    "fb": "https://www.facebook.com/MediterraneaRescuePistoia",
+    "ig": "https://www.instagram.com/mediterraneapistoia/",
+    "x": "",
+    "lat": 43.93,
+    "lon": 10.91,
+    "country": "Italy",
+    "region": "Toscana"
+  },
+  {
+    "name": "Reggio Emilia",
+    "mail": "mediterranea.reggioemilia@gmail.com",
+    "fb": "https://www.facebook.com/mediterraneareggioemilia/",
+    "ig": "",
+    "x": "",
+    "lat": 44.69,
+    "lon": 10.63,
+    "country": "Italy",
+    "region": "Emilia-Romagna"
+  },
+  {
+    "name": "Rimini",
+    "mail": "mediterranearimini@gmail.com",
+    "fb": "https://www.facebook.com/profile.php?id=100071141005307",
+    "ig": "https://www.instagram.com/mediterranearimini/",
+    "x": "",
+    "lat": 44.05,
+    "lon": 12.56,
+    "country": "Italy",
+    "region": "Emilia-Romagna"
+  },
+  {
+    "name": "Roma",
+    "mail": "mediterraneash.roma@gmail.com",
+    "fb": "https://www.facebook.com/Mediterranearoma/",
+    "ig": "https://instagram.com/mediterranearoma",
+    "x": "",
+    "lat": 41.9,
+    "lon": 12.49,
+    "country": "Italy",
+    "region": "Lazio"
+  },
+  {
+    "name": "Rovigo Centro",
+    "mail": "mediterranea.rovigo@gmail.com",
+    "fb": "https://www.facebook.com/profile.php?id=61577940503031",
+    "ig": "https://www.instagram.com/mediterranea_rovigocentro/",
+    "x": "",
+    "lat": 45.07,
+    "lon": 11.78,
+    "country": "Italy",
+    "region": "Veneto"
+  },
+  {
+    "name": "Rovigo Polesine",
+    "mail": "mediterranea.polesine.ro@gmail.com",
+    "fb": "https://www.facebook.com/profile.php?id=100070144145514",
+    "ig": "https://www.instagram.com/mediterranea_polesine.rovigo/",
+    "x": "",
+    "lat": 45.0,
+    "lon": 11.67,
+    "country": "Italy",
+    "region": "Veneto"
+  },
+  {
+    "name": "Scafati",
+    "mail": "mediterranea.scafati@gmail.com",
+    "fb": "https://www.facebook.com/mediterraneascafati/",
+    "ig": "https://www.instagram.com/mediterranea_scafati/",
+    "x": "",
+    "lat": 40.74,
+    "lon": 14.52,
+    "country": "Italy",
+    "region": "Campania"
+  },
+  {
+    "name": "Svizzera",
+    "mail": "mediterranea.ch@gmail.com",
+    "fb": "https://www.facebook.com/mediterranea.ch",
+    "ig": "https://www.instagram.com/mediterranea.switzerland/",
+    "x": "",
+    "lat": 46.81,
+    "lon": 8.22,
+    "country": "Switzerland",
+    "region": null
+  },
+  {
+    "name": "Taranto",
+    "mail": "mediterranea.ta@gmail.com",
+    "fb": "https://www.facebook.com/MediterraneaSHTaranto",
+    "ig": "https://instagram.com/mediterraneataranto?igshid=YmMyMTA2M2Y=",
+    "x": "",
+    "lat": 40.47,
+    "lon": 17.23,
+    "country": "Italy",
+    "region": "Puglia"
+  },
+  {
+    "name": "Termoli",
+    "mail": "mediterraneatermoli@gmail.com",
+    "fb": "https://www.facebook.com/mediterraneatermoli/",
+    "ig": "https://www.instagram.com/mediterranea_termoli/",
+    "x": "",
+    "lat": 41.99,
+    "lon": 14.99,
+    "country": "Italy",
+    "region": "Molise"
+  },
+  {
+    "name": "Torino",
+    "mail": "mediterraneatorino@gmail.com",
+    "fb": "https://www.facebook.com/mediterraneatorino/",
+    "ig": "https://instagram.com/mediterranea_torino",
+    "x": "",
+    "lat": 45.07,
+    "lon": 7.68,
+    "country": "Italy",
+    "region": "Piemonte"
+  },
+  {
+    "name": "Trapani",
+    "mail": "mediterraneatrapani@gmail.com",
+    "fb": "https://www.facebook.com/profile.php?id=61583542696197",
+    "ig": "https://www.instagram.com/mediterraneatrapani/",
+    "x": "",
+    "lat": 38.01,
+    "lon": 12.51,
+    "country": "Italy",
+    "region": "Sicilia"
+  },
+  {
+    "name": "Trento",
+    "mail": "mediterraneatrento@gmail.com",
+    "fb": "https://www.facebook.com/MediterraneaTrento/",
+    "ig": "https://instagram.com/mediterranea.trento",
+    "x": "",
+    "lat": 46.06,
+    "lon": 11.12,
+    "country": "Italy",
+    "region": "Trentino-Alto Adige"
+  },
+  {
+    "name": "Varese",
+    "mail": "mediterranea.edt.varese@gmail.com",
+    "fb": "https://www.facebook.com/profile.php?id=61560110800643",
+    "ig": "https://www.instagram.com/mediterraneavarese/",
+    "x": "",
+    "lat": 45.81,
+    "lon": 8.82,
+    "country": "Italy",
+    "region": "Lombardia"
+  },
+  {
+    "name": "Venezia",
+    "mail": "mediterranea.ve@gmail.com",
+    "fb": "https://www.facebook.com/RescueMedVenezia/",
+    "ig": "https://instagram.com/medvenezia",
+    "x": "https://twitter.com/RescueMedVe",
+    "lat": 45.44,
+    "lon": 12.31,
+    "country": "Italy",
+    "region": "Veneto"
+  },
+  {
+    "name": "Verona",
+    "mail": "mediterranea.vr@gmail.com",
+    "fb": "https://www.facebook.com/mediterraneaverona/",
+    "ig": "https://instagram.com/mediterranea_verona",
+    "x": "https://twitter.com/RescueMedVr",
+    "lat": 45.43,
+    "lon": 10.99,
+    "country": "Italy",
+    "region": "Veneto"
+  },
+  {
+    "name": "Vicenza",
+    "mail": "mediterranea.vi@gmail.com",
+    "fb": "https://www.facebook.com/mediterraneavicenza/",
+    "ig": "",
+    "x": "",
+    "lat": 45.54,
+    "lon": 11.54,
+    "country": "Italy",
+    "region": "Veneto"
+  }
+];
+            
+            // Draw World
+            const countries = topojson.feature(world, world.objects.countries);
+            g.selectAll(".country-path")
+                .data(countries.features)
+                .enter().append("path")
+                .attr("class", "country-path")
+                .attr("d", path);
+
+            // Draw Italy Regions
+            g.selectAll(".region-path")
+                .data(italy.features)
+                .enter().append("path")
+                .attr("class", "region-path")
+                .attr("d", path);
+
+            // Markers
+            const markers = g.selectAll(".marker")
+                .data(locations)
+                .enter().append("circle")
+                .attr("class", "marker")
+                .attr("cx", d => projection([d.lon, d.lat])[0])
+                .attr("cy", d => projection([d.lon, d.lat])[1])
+                .attr("r", 5)
+                .on("click", (event, d) => showPopup(event, d));
+
+            // Populate Filters
+            const countriesList = [...new Set(locations.map(d => d.country))].sort();
+            const regionsList = [...new Set(locations.filter(d => d.region).map(d => d.region))].sort();
+
+            const countrySelect = d3.select("#country-filter");
+            countriesList.forEach(c => countrySelect.append("option").text(c).attr("value", c));
+
+            const regionSelect = d3.select("#region-filter");
+            regionsList.forEach(r => regionSelect.append("option").text(r).attr("value", r));
+
+            // Filter Logic
+            function updateFilters() {
+                const selectedCountry = countrySelect.property("value");
+                const selectedRegion = regionSelect.property("value");
+
+                markers.style("display", d => {
+                    const countryMatch = selectedCountry === "all" || d.country === selectedCountry;
+                    const regionMatch = selectedRegion === "all" || d.region === selectedRegion;
+                    return (countryMatch && regionMatch) ? "block" : "none";
+                });
+
+                hidePopup();
+            }
+
+            countrySelect.on("change", updateFilters);
+            regionSelect.on("change", updateFilters);
+
+            // Popup Logic
+            function showPopup(event, d) {
+                const popup = d3.select("#popup");
+                const title = d3.select("#popup-title");
+                const socials = d3.select("#popup-socials");
+
+                title.text(d.name);
+                socials.html("");
+
+                if (d.mail) {
+                    socials.append("a")
+                        .attr("href", `mailto:${d.mail}`)
+                        .attr("class", "social-btn")
+                        .attr("title", "Email")
+                        .html('<i class="fas fa-envelope"></i> Email');
+                }
+                if (d.fb) {
+                    socials.append("a")
+                        .attr("href", d.fb)
+                        .attr("target", "_blank")
+                        .attr("class", "social-btn")
+                        .attr("title", "Facebook")
+                        .html('<i class="fab fa-facebook-f"></i> Facebook');
+                }
+                if (d.ig) {
+                    socials.append("a")
+                        .attr("href", d.ig)
+                        .attr("target", "_blank")
+                        .attr("class", "social-btn")
+                        .attr("title", "Instagram")
+                        .html('<i class="fab fa-instagram"></i> Instagram');
+                }
+                if (d.x) {
+                    socials.append("a")
+                        .attr("href", d.x)
+                        .attr("target", "_blank")
+                        .attr("class", "social-btn")
+                        .attr("title", "X")
+                        .html('<i class="fab fa-x-twitter"></i> X');
+                }
+
+                // Position popup
+                const [x, y] = d3.pointer(event, container);
+                popup.style("display", "block")
+                    .style("left", (x + 10) + "px")
+                    .style("top", (y - 10) + "px");
+                
+                event.stopPropagation();
+            }
+
+            function hidePopup() {
+                d3.select("#popup").style("display", "none");
+            }
+
+            d3.select(".close-popup").on("click", hidePopup);
+            svg.on("click", hidePopup);
+
+            // Responsive
+            window.addEventListener("resize", () => {
+                width = container.clientWidth;
+                height = container.clientHeight;
+                svg.attr("width", width).attr("height", height);
+                projection.translate([width / 2, height / 2]);
+                g.selectAll(".country-path").attr("d", path);
+                g.selectAll(".region-path").attr("d", path);
+                g.selectAll(".marker")
+                    .attr("cx", d => projection([d.lon, d.lat])[0])
+                    .attr("cy", d => projection([d.lon, d.lat])[1]);
+            });
+        });
+    </script>
+</body>
+</html>
