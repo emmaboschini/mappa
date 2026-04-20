@@ -71,9 +71,24 @@
             transition: r 0.2s ease-in-out, fill 0.2s;
         }
 
-        .marker:hover {
-            fill: var(--med-light-blue);
-            r: 8;
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 35, 93, 0.9);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            display: none;
+            z-index: 3000;
+            border: 1px solid var(--med-light-blue);
+            white-space: nowrap;
+        }
+
+        .tooltip i {
+            margin-left: 5px;
+            font-size: 10px;
+            color: var(--med-orange);
         }
 
         .popup {
@@ -160,6 +175,7 @@
 
     <div id="map-container">
         <svg id="map"></svg>
+        <div id="tooltip" class="tooltip"></div>
         <div id="popup" class="popup">
             <span class="close-popup">&times;</span>
             <h3 id="popup-title">Città</h3>
@@ -774,7 +790,44 @@
                 .attr("cx", d => projection([d.lon, d.lat])[0])
                 .attr("cy", d => projection([d.lon, d.lat])[1])
                 .attr("r", 5)
+                .on("mouseover", (event, d) => showTooltip(event, d))
+                .on("mousemove", (event) => moveTooltip(event))
+                .on("mouseout", () => hideTooltip())
                 .on("click", (event, d) => showPopup(event, d));
+
+            // Tooltip Logic
+            const tooltip = d3.select("#tooltip");
+
+            function showTooltip(event, d) {
+                let icons = "";
+                if (d.mail) icons += '<i class="fas fa-envelope"></i>';
+                if (d.fb) icons += '<i class="fab fa-facebook-f"></i>';
+                if (d.ig) icons += '<i class="fab fa-instagram"></i>';
+                if (d.x) icons += '<i class="fab fa-x-twitter"></i>';
+                
+                tooltip.style("display", "block")
+                    .html(`<strong>${d.name}</strong> ${icons}`);
+                
+                d3.select(event.currentTarget)
+                    .transition()
+                    .duration(200)
+                    .attr("r", 8 / d3.zoomTransform(svg.node()).k)
+                    .style("fill", config.colors.lightBlue);
+            }
+
+            function moveTooltip(event) {
+                const [x, y] = d3.pointer(event, container);
+                tooltip.style("left", (x + 15) + "px")
+                    .style("top", (y - 15) + "px");
+            }
+
+            function hideTooltip() {
+                tooltip.style("display", "none");
+                markers.transition()
+                    .duration(200)
+                    .attr("r", 5 / d3.zoomTransform(svg.node()).k)
+                    .style("fill", config.colors.orange);
+            }
 
             // Populate Filters
             const countriesList = [...new Set(locations.map(d => d.country))].sort();
