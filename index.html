@@ -338,6 +338,32 @@
             d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json")
         ]).then(([world]) => {
             
+            // Map ISO IDs to Italian names to match our locations data
+            const isoToName = {
+                "380": "Italia",
+                "724": "Spagna",
+                "276": "Germania",
+                "056": "Belgio",
+                "528": "Paesi Bassi",
+                "756": "Svizzera"
+            };
+
+            // Zoom to country helper
+            function focusOnCountry(geoFeature) {
+                const [[x0, y0], [x1, y1]] = path.bounds(geoFeature);
+                const dx = x1 - x0;
+                const dy = y1 - y0;
+                const x = (x0 + x1) / 2;
+                const y = (y0 + y1) / 2;
+                const scale = Math.min(10, 0.8 / Math.max(dx / width, dy / height));
+                const translate = [width / 2 - scale * x, height / 2 - scale * y];
+
+                svg.transition()
+                    .duration(1000)
+                    .call(zoom.transform, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale));
+            }
+
+            
             const locations = [
   {
     "name": "Alcamo",
@@ -894,7 +920,13 @@
                 .data(otherCountries)
                 .enter().append("path")
                 .attr("class", "country-path")
-                .attr("d", path);
+                .attr("d", path)
+                .on("click", (event, d) => {
+                    const countryName = isoToName[String(+d.id)];
+                    if (countryName && locations.some(loc => loc.country === countryName)) {
+                        focusOnCountry(d);
+                    }
+                });
 
             // Draw Unified Morocco
             if (moroccoFeatures.length > 0) {
@@ -902,7 +934,13 @@
                 g.append("path")
                     .datum(unifiedMorocco)
                     .attr("class", "country-path")
-                    .attr("d", path);
+                    .attr("d", path)
+                    .on("click", (event, d) => {
+                        const countryName = "Marocco"; 
+                        if (locations.some(loc => loc.country === countryName)) {
+                            focusOnCountry(d);
+                        }
+                    });
             }
 
             // Markers
@@ -985,6 +1023,11 @@
                     const regionMatch = selectedRegion === "all" || d.region === selectedRegion;
                     return (countryMatch && regionMatch) ? "block" : "none";
                 });
+
+                if (selectedCountry !== "all") {
+                    const geoFeature = countries.features.find(f => isoToName[String(+f.id)] === selectedCountry);
+                    if (geoFeature) focusOnCountry(geoFeature);
+                }
 
                 hidePopup();
             }
