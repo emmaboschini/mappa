@@ -1,0 +1,15 @@
+### Opzione 1: Embed tramite iFrame (Consigliato)
+Copia e incolla questo codice in un blocco "HTML personalizzato" su WordPress. Questo metodo è il più sicuro e garantisce che lo stile della mappa non venga influenzato dal tema del tuo sito.
+
+```html
+<iframe src="https://emmaboschini.github.io/mappa/" width="100%" height="600px" style="border:none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);" title="Mappa Equipaggi Mediterranea"></iframe>
+```
+
+---
+
+### Opzione 2: Embed diretto (Codice Completo)
+Se preferisci non usare un iFrame, puoi incollare l'intero contenuto del file `index.html` in un blocco HTML. Tuttavia, assicurati che il tuo tema WordPress non aggiunga padding o margini extra che potrebbero rompere il layout a tutto schermo.
+
+Note:
+- Assicurati che la pagina GitHub Pages sia attiva (Impostazioni -> Pages nel repository).
+- Puoi regolare il valore `height="600px"` in base alle tue esigenze.

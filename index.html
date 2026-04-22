@@ -37,39 +37,44 @@
 
         #controls {
             position: absolute;
-            top: 25px;
-            left: 25px;
+            top: 15px;
+            left: 15px;
+            right: 15px;
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;
+            pointer-events: none;
         }
 
         .filter-group {
             display: flex;
-            gap: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
             background: var(--glass-bg);
             backdrop-filter: blur(10px);
-            padding: 12px;
+            padding: 10px;
             border-radius: 12px;
             border: 1px solid rgba(0, 158, 224, 0.3);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            pointer-events: auto;
         }
 
         .zoom-controls {
             display: flex;
             flex-direction: row;
             gap: 8px;
+            pointer-events: auto;
         }
 
         .zoom-btn {
-            width: 36px;
-            height: 36px;
+            width: 44px;
+            height: 44px;
             background-color: var(--med-orange);
             color: var(--med-white);
             border: none;
             border-radius: 8px;
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
             cursor: pointer;
             display: flex;
@@ -85,15 +90,17 @@
         }
 
         select {
+            flex: 1;
+            min-width: 140px;
             background-color: var(--med-orange);
             color: var(--med-white);
             border: none;
-            padding: 10px 35px 10px 15px;
+            padding: 12px 35px 12px 15px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
             outline: none;
-            font-size: 12px;
+            font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             appearance: none;
@@ -243,6 +250,32 @@
         .close-popup:hover {
             color: var(--med-orange);
         }
+
+        @media (max-width: 600px) {
+            #controls {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+            }
+            .filter-group {
+                padding: 8px;
+            }
+            select {
+                font-size: 11px;
+                padding: 10px 30px 10px 10px;
+                min-width: 120px;
+            }
+            .popup {
+                width: 85%;
+                left: 50% !important;
+                top: 50% !important;
+                transform: translate(-50%, -50%);
+                position: fixed;
+            }
+            .tooltip {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -293,8 +326,8 @@
         svg.attr("width", width).attr("height", height);
 
         const projection = d3.geoMercator()
-            .center([12, 43]) 
-            .scale(width * 1.5) 
+            .center([12, 42]) 
+            .scale(width < 600 ? width * 2.5 : width * 1.5) 
             .translate([width / 2, height / 2]);
 
         const path = d3.geoPath().projection(projection);
@@ -990,9 +1023,16 @@
             svg.on("click", hidePopup);
 
             window.addEventListener("resize", () => {
-                width = container.clientWidth; height = container.clientHeight;
+                width = container.clientWidth;
+                height = container.clientHeight;
                 svg.attr("width", width).attr("height", height);
-                projection.translate([width / 2, height / 2]);
+                
+                projection
+                    .scale(width < 600 ? width * 2.5 : width * 1.5)
+                    .translate([width / 2, height / 2]);
+                    
+                path.projection(projection);
+                
                 g.selectAll(".country-path").attr("d", path);
                 markerGroups.attr("transform", d => `translate(${projection([d.lon, d.lat])})`);
             });
